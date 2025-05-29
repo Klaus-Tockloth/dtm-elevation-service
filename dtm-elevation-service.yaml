@@ -1,0 +1,44 @@
+# --------------------------------------------------
+# Purpose:
+# - Program configuration for DTM Elevation Service
+# 
+# Release:
+# - v0.10 - 2025-05-12: corresponding to main release
+#
+# Remarks:
+# - do not use tabs or unnecessary white spaces in YAML files
+# --------------------------------------------------
+
+# server listen address
+ListenAddress: :14444
+
+# server security
+ServerCertificate: ./certs/api.hoehendaten.de.crt
+ServerKey: ./certs/api.hoehendaten.de.key
+
+# shutdown grace period in seconds
+ShutdownGracePeriod: 30
+
+# log directory (log file name is derived from program name)
+LogDirectory: ./logs
+
+# log level (debug, info, warning, error)
+LogLevel: debug
+
+# tile repositories with metadata
+TileRepositories:
+- /var/www/dgm1/de-hb/repository-DE-HB.json
+- /var/www/dgm1/de-ni/repository-DE-NI.json
+- /var/www/dgm1/de-nw/repository-DE-NW.json
+- /var/www/dgm1/de-hh/repository-DE-HH.json
+- /var/www/dgm1/de-he/repository-DE-HE.json
+- /var/www/dgm1/de-sh/repository-DE-SH.json
+- /var/www/dgm1/de-bb/repository-DE-BB.json
+- /var/www/dgm1/de-sn/repository-DE-SN.json
+- /var/www/dgm1/de-rp/repository-DE-RP.json
+- /var/www/dgm1/de-by/repository-DE-BY.json
+- /var/www/dgm1/de-th/repository-DE-TH.json
+- /var/www/dgm1/de-sl/repository-DE-SL.json
+- /var/www/dgm1/de-st/repository-DE-ST.json
+- /var/www/dgm1/de-mv/repository-DE-MV.json
+- /var/www/dgm1/de-bw/repository-DE-BW.json
