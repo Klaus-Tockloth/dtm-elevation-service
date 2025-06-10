@@ -88,16 +88,19 @@ func pointRequest(writer http.ResponseWriter, request *http.Request) {
 
 	// get attribution for resource
 	attribution := "unknown"
+	origin := "unknown"
 	resource, err := getElevationResource(tile.Source)
 	if err != nil {
 		slog.Error("point request: error getting elevation resource", "error", err, "source", tile.Source, "ID", pointRequest.ID)
 	} else {
 		attribution = resource.Attribution
+		origin = resource.Code
 	}
 
 	// success response
 	pointResponse.Attributes.Elevation = elevation
 	pointResponse.Attributes.Actuality = tile.Actuality
+	pointResponse.Attributes.Origin = origin
 	pointResponse.Attributes.Attribution = attribution
 	pointResponse.Attributes.TileIndex = tile.Index
 	pointResponse.Attributes.IsError = false

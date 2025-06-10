@@ -219,3 +219,114 @@ func getElevationFromUTM(xUTM, yUTM float64, filename string) (elevation float64
 
 	return // return named results (elevation, err)
 }
+
+/*
+calculateWGS84BoundingBox takes a GeoTIFF filename and calculates the bounding box in
+WGS84 (Lon/Lat). It assumes the input file has a defined spatial reference system.
+*/
+func calculateWGS84BoundingBox(filename string) (WGS84BoundingBox, error) {
+	latLonBBox := WGS84BoundingBox{}
+
+	dataset, err := godal.Open(filename)
+	if err != nil {
+		return latLonBBox, fmt.Errorf("error [%w] at godal.Open(), file %s", err, filename)
+	}
+	defer dataset.Close()
+
+	// get dataset structure (for size)
+	structure := dataset.Structure()
+	sizeX := float64(structure.SizeX)
+	sizeY := float64(structure.SizeY)
+
+	// get geotransformation
+	gt, err := dataset.GeoTransform()
+	if err != nil {
+		return latLonBBox, fmt.Errorf("error [%w] at dataset.GeoTransform()", err)
+	}
+
+	// calculate corner coordinates in the source projection
+	// Corner coordinates correspond to the outer edges of the corner pixels.
+	// Pixel (0,0) is the upper-left corner.
+	// The formula is: X_proj = GT[0] + pixel * GT[1] + line * GT[2]
+	//                 Y_proj = GT[3] + pixel * GT[4] + line * GT[5]
+
+	// upper-left corner (pixel 0, 0)
+	ulX := gt[0]
+	ulY := gt[3]
+
+	// upper-right corner (pixel sizeX, 0)
+	urX := gt[0] + sizeX*gt[1] + 0*gt[2]
+	urY := gt[3] + sizeX*gt[4] + 0*gt[5]
+
+	// lower-left corner (pixel 0, sizeY)
+	llX := gt[0] + 0*gt[1] + sizeY*gt[2]
+	llY := gt[3] + 0*gt[4] + sizeY*gt[5]
+
+	// lower-right corner (pixel sizeX, sizeY)
+	lrX := gt[0] + sizeX*gt[1] + sizeY*gt[2]
+	lrY := gt[3] + sizeX*gt[4] + sizeY*gt[5]
+
+	// store the 4 source corner points in slices for easy processing
+	srcXCoords := []float64{ulX, urX, llX, lrX}
+	srcYCoords := []float64{ulY, urY, llY, lrY}
+
+	// ----- transform to WGS84 (Lon/Lat) -----
+
+	// get source Spatial Reference System (SRS)
+	srcSRS := dataset.SpatialRef()
+	if srcSRS == nil {
+		return latLonBBox, fmt.Errorf("source Spatial Reference System (SRS) not found, transformation not possible")
+	}
+	defer srcSRS.Close()
+
+	// create target Spatial Reference System (WGS84, EPSG:4326)
+	tgtSRS, err := godal.NewSpatialRefFromEPSG(4326)
+	if err != nil {
+		return latLonBBox, fmt.Errorf("error [%s] at godal.NewSpatialRefFromEPSG(4326)", err)
+	}
+	defer tgtSRS.Close()
+
+	// create the coordinate transformation transformer [2]
+	transformer, err := godal.NewTransform(srcSRS, tgtSRS)
+	if err != nil {
+		return latLonBBox, fmt.Errorf("error [%s] at godal.NewTransform()", err)
+	}
+	defer transformer.Close()
+
+	// transform the source corner coordinates to WGS84 (godal.TransformEx transforms the slices in-place)
+	latLonXCoords := make([]float64, 4) // will contain Lon
+	latLonYCoords := make([]float64, 4) // will contain Lat
+	copy(latLonXCoords, srcXCoords)     // copy source X coordinates
+	copy(latLonYCoords, srcYCoords)     // copy source Y coordinates
+
+	// slice for successful transformations for each point
+	successful := make([]bool, 4)
+
+	// perform the transformation
+	// TransformEx expects x, y (and optional z) slices and a slice for success status.
+	// After transformation, latLonXCoords will contain Longitude and latLonYCoords will contain Latitude.
+	err = transformer.TransformEx(latLonXCoords, latLonYCoords, nil, successful) // nil for Z-coordinates if not needed
+	if err != nil {
+		return latLonBBox, fmt.Errorf("error [%w] at transformer.TransformEx()", err)
+	}
+
+	// calculate the Lat/Lon bounding box (min/max of transformed corner coordinates)
+	latLonBBox.MinLon = math.Inf(1)  // positive infinity (Lon)
+	latLonBBox.MaxLon = math.Inf(-1) // negative infinity (Lon)
+	latLonBBox.MinLat = math.Inf(1)  // positive infinity (Lat)
+	latLonBBox.MaxLat = math.Inf(-1) // negative infinity (Lat)
+
+	for i := 0; i < 4; i++ {
+		if successful[i] {
+			// latLonXCoords[i] is now Longitude, latLonYCoords[i] is now Latitude
+			latLonBBox.MinLon = math.Min(latLonBBox.MinLon, latLonXCoords[i]) // min Longitude
+			latLonBBox.MaxLon = math.Max(latLonBBox.MaxLon, latLonXCoords[i]) // max Longitude
+			latLonBBox.MinLat = math.Min(latLonBBox.MinLat, latLonYCoords[i]) // min Latitude
+			latLonBBox.MaxLat = math.Max(latLonBBox.MaxLat, latLonYCoords[i]) // max Latitude
+		} else {
+			return latLonBBox, fmt.Errorf("point %d could not be transformed to WGS84", i)
+		}
+	}
+
+	return latLonBBox, nil
+}

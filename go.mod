@@ -1,6 +1,6 @@
-module klaus/elevation/dtm-elevation-service
+module klaus/elevation/dtm-elevation-service-dev
 
-go 1.24
+go 1.24.3
 
 require (
 	github.com/airbusgeo/godal v0.0.13

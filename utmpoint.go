@@ -89,16 +89,19 @@ func utmPointRequest(writer http.ResponseWriter, request *http.Request) {
 
 	// get attribution for resource
 	attribution := "unknown"
+	origin := "unknown"
 	resource, err := getElevationResource(tile.Source)
 	if err != nil {
-		slog.Error("utm point request: error getting elevation resource", "error", err, "source", tile.Source, "ID", utmPointRequest.ID)
+		slog.Error("point request: error getting elevation resource", "error", err, "source", tile.Source, "ID", utmPointRequest.ID)
 	} else {
 		attribution = resource.Attribution
+		origin = resource.Code
 	}
 
 	// success response
 	utmPointResponse.Attributes.Elevation = elevation
 	utmPointResponse.Attributes.Actuality = tile.Actuality
+	utmPointResponse.Attributes.Origin = origin
 	utmPointResponse.Attributes.Attribution = attribution
 	utmPointResponse.Attributes.TileIndex = tile.Index
 	utmPointResponse.Attributes.IsError = false

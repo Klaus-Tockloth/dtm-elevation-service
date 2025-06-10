@@ -7,6 +7,7 @@ Description:
 
 Releases:
 - v1.0.0 - 2025-05-23: initial release
+- v1.1.0 - 2025-06-10: contours added, hillshading added, origin added to point
 
 Author:
 - Klaus Tockloth
@@ -24,7 +25,7 @@ Remarks:
 
 TODOs:
 - Validieren: Datenbezogene Fehler nur im Debug-Modus loggen.
-- Beim Aufbau des globalen Repositories, neuere Tile bevorzugen (betrifft nur doppelte Tiles an Ländergrenzen).
+- Beim Aufbau des globalen Repositories, neuere Tile bevorzugen (betrifft nur mehrfache Tiles an Ländergrenzen).
 
 Links:
 - https://pkg.go.dev/github.com/airbusgeo/godal
@@ -58,8 +59,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.0.0"
-	progDate      = "2025-05-23"
+	progVersion   = "v1.1.0"
+	progDate      = "2025-06-10"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
@@ -82,11 +83,13 @@ var progConfig ProgConfig
 
 // statistics
 var (
-	PointRequests    uint64
-	UTMPointRequests uint64
-	GPXRequests      uint64
-	GPXPoints        uint64
-	DGMPoints        uint64
+	PointRequests     uint64
+	UTMPointRequests  uint64
+	GPXRequests       uint64
+	GPXPoints         uint64
+	DGMPoints         uint64
+	ContoursRequests  uint64
+	HillshadeRequests uint64
 )
 
 /*
@@ -172,12 +175,18 @@ func main() {
 	http.HandleFunc("POST /v1/gpx", gpxRequest)
 	http.HandleFunc("OPTIONS /v1/gpx", corsOptionsHandler)
 
+	http.HandleFunc("POST /v1/contours", contoursRequest)
+	http.HandleFunc("OPTIONS /v1/contours", corsOptionsHandler)
+
+	http.HandleFunc("POST /v1/hillshade", hillshadeRequest)
+	http.HandleFunc("OPTIONS /v1/hillshade", corsOptionsHandler)
+
 	// handle unsupported routes or methods
 	http.HandleFunc("/", unsupportedRequest)
 
 	// define service
 	DtmElevationService := &http.Server{
-		Addr:              ":14444",
+		Addr:              progConfig.ListenAddress,
 		Handler:           nil,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       120 * time.Second,
@@ -259,6 +268,8 @@ func logStatistics() {
 	currentGPXRequests := atomic.LoadUint64(&GPXRequests)
 	currentGPXPoints := atomic.LoadUint64(&GPXPoints)
 	currentDGMPoints := atomic.LoadUint64(&DGMPoints)
+	currentContoursRequests := atomic.LoadUint64(&ContoursRequests)
+	currentHillshadeRequests := atomic.LoadUint64(&HillshadeRequests)
 
 	// reset statistics
 	atomic.StoreUint64(&PointRequests, 0)
@@ -266,10 +277,19 @@ func logStatistics() {
 	atomic.StoreUint64(&GPXRequests, 0)
 	atomic.StoreUint64(&GPXPoints, 0)
 	atomic.StoreUint64(&DGMPoints, 0)
+	atomic.StoreUint64(&ContoursRequests, 0)
+	atomic.StoreUint64(&HillshadeRequests, 0)
 
 	// log statistics
-	slog.Info("load statistics", "PointRequests", currentPointRequests, "UTMPointRequests", currentUTMPointRequests,
-		"GPXRequests", currentGPXRequests, "GPXPoints", currentGPXPoints, "DGMPoints", currentDGMPoints)
+	slog.Info("load statistics",
+		"PointRequests", currentPointRequests,
+		"UTMPointRequests", currentUTMPointRequests,
+		"GPXRequests", currentGPXRequests,
+		"GPXPoints", currentGPXPoints,
+		"DGMPoints", currentDGMPoints,
+		"ContoursRequests", currentContoursRequests,
+		"HillshadeRequests", currentHillshadeRequests,
+	)
 }
 
 /*

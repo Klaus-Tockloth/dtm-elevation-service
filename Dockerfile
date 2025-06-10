@@ -13,7 +13,7 @@
 # ------------------------------------
 
 # go version
-FROM golang:1.24.2-bookworm AS builder
+FROM golang:1.24.3-bookworm AS builder
 
 # install cross-compilation packages
 # RUN apt-get update && apt-get install -y --no-install-recommends gcc-x86-64-linux-gnu
@@ -38,7 +38,11 @@ RUN go mod download
 COPY . .
 
  # build natively for the target platform (GOOS/GOARCH set by buildx)
- RUN CGO_ENABLED=1 go build -v -o dtm-elevation-service .
+ # TODO
+ # RUN CGO_ENABLED=1 go build -v -o dtm-elevation-service .
+ RUN CGO_ENABLED=1 go build -v -o dtm-elevation-service-dev .
 
 # show file stat of binary
-RUN ls -la /app/dtm-elevation-service
+# TODO
+# RUN ls -la /app/dtm-elevation-service
+RUN ls -la /app/dtm-elevation-service-dev

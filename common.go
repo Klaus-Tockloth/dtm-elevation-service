@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"math"
 	"os"
+	"os/exec"
+	"strings"
+	"syscall"
 )
 
 // --------------------------------------------------------------------------------
@@ -18,18 +22,24 @@ const (
 
 // JSON API types
 const (
-	TypePointRequest     = "PointRequest"
-	TypePointResponse    = "PointResponse"
-	TypeUTMPointRequest  = "UTMPointRequest"
-	TypeUTMPointResponse = "UTMPointResponse"
-	TypeGPXRequest       = "GPXRequest"
-	TypeGPXResponse      = "GPXResponse"
+	TypePointRequest      = "PointRequest"
+	TypePointResponse     = "PointResponse"
+	TypeUTMPointRequest   = "UTMPointRequest"
+	TypeUTMPointResponse  = "UTMPointResponse"
+	TypeGPXRequest        = "GPXRequest"
+	TypeGPXResponse       = "GPXResponse"
+	TypeContoursRequest   = "ContoursRequest"
+	TypeContoursResponse  = "ContoursResponse"
+	TypeHillshadeRequest  = "HillshadeRequest"
+	TypeHillshadeResponse = "HillshadeResponse"
 )
 
 // request body limits (in bytes, for security reasons)
 const (
-	MaxPointRequestBodySize = 4 * 1024
-	MaxGpxRequestBodySize   = 24 * 1024 * 1024
+	MaxPointRequestBodySize     = 4 * 1024
+	MaxGpxRequestBodySize       = 24 * 1024 * 1024
+	MaxContoursRequestBodySize  = 4 * 1024
+	MaxHillshadeRequestBodySize = 4 * 1024
 )
 
 // ErrorObject represents error details.
@@ -65,6 +75,15 @@ var elevationSources = []ElevationSource{
 	{Code: "DE-TH", Name: "Thüringen", Attribution: "© GDI-Th (2025), dl-de/by-2-0"},
 }
 
+// WGS84BoundingBox represents min/max longitude and latitude coordinates in WGS84.
+type WGS84BoundingBox struct {
+	MinLon float64
+	MaxLon float64
+	MinLat float64
+	MaxLat float64
+}
+
+//
 // --------------------------------------------------------------------------------
 // Request  : Client -> PointRequest  -> Service
 // Response : Client <- PointResponse <- Service
@@ -89,6 +108,7 @@ type PointResponse struct {
 		Latitude    float64
 		Elevation   float64
 		Actuality   string
+		Origin      string
 		Attribution string
 		TileIndex   string
 		IsError     bool
@@ -122,6 +142,7 @@ type UTMPointResponse struct {
 		Northing    float64
 		Elevation   float64
 		Actuality   string
+		Origin      string
 		Attribution string
 		TileIndex   string
 		IsError     bool
@@ -139,7 +160,7 @@ type GPXRequest struct {
 	Type       string
 	ID         string
 	Attributes struct {
-		GPXData string // Base64 encoded GPX XML string
+		GPXData string // base64 encoded GPX XML string
 	}
 }
 
@@ -148,12 +169,113 @@ type GPXResponse struct {
 	Type       string
 	ID         string
 	Attributes struct {
-		GPXData      string // Base64 encoded GPX XML string
+		GPXData      string // base64 encoded GPX XML string
 		GPXPoints    int
 		DGMPoints    int
 		Attributions []string
 		IsError      bool
 		Error        ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> ContoursRequest  -> Service
+// Response : Client <- ContoursResponse <- Service
+// --------------------------------------------------------------------------------
+
+// ContoursRequest represents coordinates, format and equidistance for contours request.
+type ContoursRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone         int
+		Easting      float64
+		Northing     float64
+		Longitude    float64
+		Latitude     float64
+		Equidistance float64
+	}
+}
+
+// Contour represents compressed contours lines for one tile.
+type Contour struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+}
+
+// ContoursResponse represents contours objects for contours response.
+type ContoursResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone         int
+		Easting      float64
+		Northing     float64
+		Longitude    float64
+		Latitude     float64
+		Equidistance float64
+		Contours     []Contour
+		IsError      bool
+		Error        ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> HillshadeRequest  -> Service
+// Response : Client <- HillshadeResponse <- Service
+// --------------------------------------------------------------------------------
+
+// HillshadeRequest represents coordinates and settings for hillshade request.
+type HillshadeRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		GradientAlgorithm    string // Horn, ZevenbergenThorne
+		VerticalExaggeration float64
+		AzimuthOfLight       uint
+		AltitudeOfLight      uint
+		ShadingVariant       string // regular, combined, multidirectional, igor
+	}
+}
+
+// Hillshade represents compressed hillshade object (PNG  or GeoTIFF) for one tile.
+type Hillshade struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+	BoundingBox WGS84BoundingBox
+}
+
+// HillshadeResponse represents hillshade objects for hillshade response.
+type HillshadeResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		GradientAlgorithm    string
+		VerticalExaggeration float64
+		AzimuthOfLight       uint
+		AltitudeOfLight      uint
+		ShadingVariant       string
+		Hillshades           []Hillshade
+		IsError              bool
+		Error                ErrorObject
 	}
 }
 
@@ -437,4 +559,43 @@ func getElevationForUTMPoint(zone int, easting, northing float64) (float64, Tile
 
 	// success
 	return elevation, tile, nil
+}
+
+/*
+runCommand runs a command or program.
+*/
+func runCommand(program string, args []string) (commandExitStatus int, commandOutput []byte, err error) {
+	cmd := exec.Command(program, args...)
+	commandOutput, err = cmd.CombinedOutput()
+
+	// full command for logging
+	fullCommand := program + " " + strings.Join(cmd.Args, " ")
+
+	var waitStatus syscall.WaitStatus
+	if err != nil {
+		// command was not successful
+		if exitError, ok := err.(*exec.ExitError); ok {
+			// command fails because of an unsuccessful exit code
+			waitStatus = exitError.Sys().(syscall.WaitStatus)
+			slog.Error("program exit code", "exit code", waitStatus.ExitStatus())
+		}
+		slog.Error("unexpected error at cmd.CombinedOutput()", "error", err)
+		slog.Error("program (not successful)", "program/command", fullCommand)
+		if len(commandOutput) > 0 {
+			slog.Info("program output (stdout, stderr)", "output", string(commandOutput))
+		}
+	} else {
+		// command was successful
+		waitStatus = cmd.ProcessState.Sys().(syscall.WaitStatus)
+		/*
+			slog.Info("program (successful)", "program/command", fullCommand)
+			slog.Info("program exit code", "exit code", waitStatus.ExitStatus())
+			if len(commandOutput) > 0 {
+				slog.Info("program output (stdout, stderr)", "output", string(commandOutput))
+			}
+		*/
+	}
+
+	commandExitStatus = waitStatus.ExitStatus()
+	return
 }

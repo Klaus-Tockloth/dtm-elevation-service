@@ -8,6 +8,7 @@
 # - v1.0.0 - 2025-04-17: first release
 # - v1.1.0 - 2025-05-06: CGO_CFLAGS for gdal added
 # - v1.2.0 - 2025-05-12: CGO_LDFLAGS for gdal added
+# - v1.3.0 - 2025-06-07: gdal library configuration modified
 # ------------------------------------
 
 # set -o xtrace
@@ -27,9 +28,9 @@ gosec -ai-api-provider="gemini" -exclude=G115,G304 ./...
 # show compiler version
 go version
 
-# gdal
-export CGO_CFLAGS="-I/opt/homebrew/opt/gdal/include"
-export CGO_LDFLAGS="-L/opt/homebrew/Cellar/gdal/3.11.0/lib"
+# current installed version of gdal library
+export CGO_CFLAGS="$(pkg-config --cflags gdal)"
+export CGO_LDFLAGS="$(pkg-config --libs gdal)"
 
 # compile 'darwin' (native on macOS, arm64 -> arm64)
 go build -v -o build/darwin-arm64/dtm-elevation-service
