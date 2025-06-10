@@ -38,11 +38,7 @@ RUN go mod download
 COPY . .
 
  # build natively for the target platform (GOOS/GOARCH set by buildx)
- # TODO
- # RUN CGO_ENABLED=1 go build -v -o dtm-elevation-service .
- RUN CGO_ENABLED=1 go build -v -o dtm-elevation-service-dev .
+ RUN CGO_ENABLED=1 go build -v -o dtm-elevation-service .
 
 # show file stat of binary
-# TODO
-# RUN ls -la /app/dtm-elevation-service
-RUN ls -la /app/dtm-elevation-service-dev
+RUN ls -la /app/dtm-elevation-service

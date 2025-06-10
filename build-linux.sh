@@ -27,15 +27,11 @@ docker buildx build --platform linux/amd64 --progress=plain --tag dtm-elevation-
 docker create --name temp_container dtm-elevation-service-linux-amd64
 
 # copy binary to local filesystem
-# TODO
-# docker cp temp_container:/app/dtm-elevation-service ./dtm-elevation-service
-docker cp temp_container:/app/dtm-elevation-service-dev ./dtm-elevation-service-dev
+docker cp temp_container:/app/dtm-elevation-service ./dtm-elevation-service
 
 # remove temporary container
 docker rm temp_container
 
 # move binary to target directory
-# TODO
-# mv ./dtm-elevation-service "$DIR/dtm-elevation-service"
-mv ./dtm-elevation-service-dev "$DIR/dtm-elevation-service-dev"
+mv ./dtm-elevation-service "$DIR/dtm-elevation-service"
 

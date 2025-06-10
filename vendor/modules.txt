@@ -4,12 +4,12 @@ github.com/airbusgeo/godal
 # github.com/tkrajina/gpxgo v1.4.0
 ## explicit; go 1.16
 github.com/tkrajina/gpxgo/gpx
-# golang.org/x/net v0.40.0
+# golang.org/x/net v0.41.0
 ## explicit; go 1.23.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/text v0.25.0
+# golang.org/x/text v0.26.0
 ## explicit; go 1.23.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap

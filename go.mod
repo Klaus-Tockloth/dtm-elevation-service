@@ -1,4 +1,4 @@
-module klaus/elevation/dtm-elevation-service-dev
+module klaus/elevation/dtm-elevation-service
 
 go 1.24.3
 
@@ -10,6 +10,6 @@ require (
 )
 
 require (
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 )
