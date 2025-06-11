@@ -242,8 +242,8 @@ func verifyContoursRequestData(request *http.Request, contoursRequest ContoursRe
 	}
 
 	// verify equidistance
-	if contoursRequest.Attributes.Equidistance < 0.2 || contoursRequest.Attributes.Equidistance > 10.0 {
-		return errors.New("equidistance must be between 0.2 and 10.0 meters")
+	if contoursRequest.Attributes.Equidistance < 0.2 || contoursRequest.Attributes.Equidistance > 25.0 {
+		return errors.New("equidistance must be between 0.2 and 25.0 meters")
 	}
 
 	return nil
