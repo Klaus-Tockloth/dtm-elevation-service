@@ -408,7 +408,7 @@ func generateHillshadeObjectForTile(tile TileMetadata, outputFormat string, grad
 	}
 
 	// 1. calculate hillshade on original source data
-	// e.g. gdaldem hillshade  dgm1_32_409_5790_1_nw_2024.tif 32_409_5790.hillshade.utm.tif -compute_edges -z 1.0 -az 315 -alt 45 -alg Horn
+	// e.g. gdaldem hillshade dgm1_32_409_5790_1_nw_2024.tif 32_409_5790.hillshade.utm.tif -compute_edges -z 1.0 -az 315 -alt 45 -alg Horn
 	commandExitStatus, commandOutput, err := runCommand("gdaldem", options)
 	if err != nil {
 		return hillshade, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
@@ -457,8 +457,6 @@ func generateHillshadeObjectForTile(tile TileMetadata, outputFormat string, grad
 	default:
 		return hillshade, fmt.Errorf("unsupported format [%s]", outputFormat)
 	}
-
-	// calculate bounding boxes (georeference of image)
 
 	// set hillshade return structure
 	hillshade.Data = data

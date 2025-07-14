@@ -113,7 +113,7 @@ func gpxRequest(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// add creator
-	creator := "Höhenangaben von elevation.printmaps-osm.de"
+	creator := "Höhenangaben von hoehendaten.de"
 	if processedGpxData.Creator == "" {
 		processedGpxData.Creator = creator
 	} else {

@@ -9,6 +9,7 @@ Releases:
 - v1.0.0 - 2025-05-23: initial release
 - v1.1.0 - 2025-06-10: contours added, hillshading added, origin added to point
 - v1.1.1 - 2025-06-11: valid equidistance 0.2-25.0 m
+- v1.2.0 - 2025-07-14: added: aspect, slope, gpx analyze
 
 Author:
 - Klaus Tockloth
@@ -60,8 +61,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.1.1"
-	progDate      = "2025-06-11"
+	progVersion   = "v1.2.0"
+	progDate      = "2025-07-14"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
@@ -84,13 +85,16 @@ var progConfig ProgConfig
 
 // statistics
 var (
-	PointRequests     uint64
-	UTMPointRequests  uint64
-	GPXRequests       uint64
-	GPXPoints         uint64
-	DGMPoints         uint64
-	ContoursRequests  uint64
-	HillshadeRequests uint64
+	PointRequests      uint64
+	UTMPointRequests   uint64
+	GPXRequests        uint64
+	GPXAnalyzeRequests uint64
+	GPXPoints          uint64
+	DGMPoints          uint64
+	ContoursRequests   uint64
+	HillshadeRequests  uint64
+	SlopeRequests      uint64
+	AspectRequests     uint64
 )
 
 /*
@@ -176,11 +180,20 @@ func main() {
 	http.HandleFunc("POST /v1/gpx", gpxRequest)
 	http.HandleFunc("OPTIONS /v1/gpx", corsOptionsHandler)
 
+	http.HandleFunc("POST /v1/gpxanalyze", gpxAnalyzeRequest)
+	http.HandleFunc("OPTIONS /v1/gpxanalyze", corsOptionsHandler)
+
 	http.HandleFunc("POST /v1/contours", contoursRequest)
 	http.HandleFunc("OPTIONS /v1/contours", corsOptionsHandler)
 
 	http.HandleFunc("POST /v1/hillshade", hillshadeRequest)
 	http.HandleFunc("OPTIONS /v1/hillshade", corsOptionsHandler)
+
+	http.HandleFunc("POST /v1/slope", slopeRequest)
+	http.HandleFunc("OPTIONS /v1/slope", corsOptionsHandler)
+
+	http.HandleFunc("POST /v1/aspect", aspectRequest)
+	http.HandleFunc("OPTIONS /v1/aspect", corsOptionsHandler)
 
 	// handle unsupported routes or methods
 	http.HandleFunc("/", unsupportedRequest)
@@ -267,29 +280,38 @@ func logStatistics() {
 	currentPointRequests := atomic.LoadUint64(&PointRequests)
 	currentUTMPointRequests := atomic.LoadUint64(&UTMPointRequests)
 	currentGPXRequests := atomic.LoadUint64(&GPXRequests)
+	currentGPXAnalyzeRequests := atomic.LoadUint64(&GPXAnalyzeRequests)
 	currentGPXPoints := atomic.LoadUint64(&GPXPoints)
 	currentDGMPoints := atomic.LoadUint64(&DGMPoints)
 	currentContoursRequests := atomic.LoadUint64(&ContoursRequests)
 	currentHillshadeRequests := atomic.LoadUint64(&HillshadeRequests)
+	currentSlopeRequests := atomic.LoadUint64(&SlopeRequests)
+	currentAspectRequests := atomic.LoadUint64(&AspectRequests)
 
 	// reset statistics
 	atomic.StoreUint64(&PointRequests, 0)
 	atomic.StoreUint64(&UTMPointRequests, 0)
 	atomic.StoreUint64(&GPXRequests, 0)
+	atomic.StoreUint64(&GPXAnalyzeRequests, 0)
 	atomic.StoreUint64(&GPXPoints, 0)
 	atomic.StoreUint64(&DGMPoints, 0)
 	atomic.StoreUint64(&ContoursRequests, 0)
 	atomic.StoreUint64(&HillshadeRequests, 0)
+	atomic.StoreUint64(&SlopeRequests, 0)
+	atomic.StoreUint64(&AspectRequests, 0)
 
 	// log statistics
 	slog.Info("load statistics",
 		"PointRequests", currentPointRequests,
 		"UTMPointRequests", currentUTMPointRequests,
 		"GPXRequests", currentGPXRequests,
+		"GPXAnalyzeRequests", currentGPXAnalyzeRequests,
 		"GPXPoints", currentGPXPoints,
 		"DGMPoints", currentDGMPoints,
 		"ContoursRequests", currentContoursRequests,
 		"HillshadeRequests", currentHillshadeRequests,
+		"SlopeRequests", currentSlopeRequests,
+		"AspectRequests", currentAspectRequests,
 	)
 }
 

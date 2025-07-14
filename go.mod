@@ -1,6 +1,6 @@
 module klaus/elevation/dtm-elevation-service
 
-go 1.24.3
+go 1.24.4
 
 require (
 	github.com/airbusgeo/godal v0.0.13
@@ -10,6 +10,6 @@ require (
 )
 
 require (
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 )

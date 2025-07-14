@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math"
@@ -8,6 +10,8 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+	"time"
+	"unicode"
 )
 
 // --------------------------------------------------------------------------------
@@ -22,24 +26,33 @@ const (
 
 // JSON API types
 const (
-	TypePointRequest      = "PointRequest"
-	TypePointResponse     = "PointResponse"
-	TypeUTMPointRequest   = "UTMPointRequest"
-	TypeUTMPointResponse  = "UTMPointResponse"
-	TypeGPXRequest        = "GPXRequest"
-	TypeGPXResponse       = "GPXResponse"
-	TypeContoursRequest   = "ContoursRequest"
-	TypeContoursResponse  = "ContoursResponse"
-	TypeHillshadeRequest  = "HillshadeRequest"
-	TypeHillshadeResponse = "HillshadeResponse"
+	TypePointRequest       = "PointRequest"
+	TypePointResponse      = "PointResponse"
+	TypeUTMPointRequest    = "UTMPointRequest"
+	TypeUTMPointResponse   = "UTMPointResponse"
+	TypeGPXRequest         = "GPXRequest"
+	TypeGPXResponse        = "GPXResponse"
+	TypeGPXAnalyzeRequest  = "GPXAnalyzeRequest"
+	TypeGPXAnalyzeResponse = "GPXAnalyzeResponse"
+	TypeContoursRequest    = "ContoursRequest"
+	TypeContoursResponse   = "ContoursResponse"
+	TypeHillshadeRequest   = "HillshadeRequest"
+	TypeHillshadeResponse  = "HillshadeResponse"
+	TypeSlopeRequest       = "SlopeRequest"
+	TypeSlopeResponse      = "SlopeResponse"
+	TypeAspectRequest      = "AspectRequest"
+	TypeAspectResponse     = "AspectResponse"
 )
 
 // request body limits (in bytes, for security reasons)
 const (
-	MaxPointRequestBodySize     = 4 * 1024
-	MaxGpxRequestBodySize       = 24 * 1024 * 1024
-	MaxContoursRequestBodySize  = 4 * 1024
-	MaxHillshadeRequestBodySize = 4 * 1024
+	MaxPointRequestBodySize      = 4 * 1024
+	MaxGpxRequestBodySize        = 24 * 1024 * 1024
+	MaxGpxAnalyzeRequestBodySize = 24 * 1024 * 1024
+	MaxContoursRequestBodySize   = 4 * 1024
+	MaxHillshadeRequestBodySize  = 4 * 1024
+	MaxSlopeRequestBodySize      = 16 * 1024
+	MaxAspectRequestBodySize     = 16 * 1024
 )
 
 // ErrorObject represents error details.
@@ -179,6 +192,93 @@ type GPXResponse struct {
 }
 
 // --------------------------------------------------------------------------------
+// Request  : Client -> GPXAnalyzeRequest  -> Service
+// Response : Client <- GPXAnalyzeResponse <- Service
+// --------------------------------------------------------------------------------
+
+// GpxAnalyzeResult holds all processed data from a GPX file.
+type GpxAnalyzeResult struct {
+	Version     string
+	Name        string
+	Description string
+	Creator     string
+	Time        *time.Time
+	TotalPoints int
+	Tracks      []GpxAnalyzeTrackResult
+}
+
+// GpxAnalyzeTrackResult holds data for a single track.
+type GpxAnalyzeTrackResult struct {
+	Name        string
+	Comment     string
+	Description string
+	Source      string
+	Type        string
+	Segments    []GpxAnalyzeSegmentResult
+}
+
+// GpxAnalyzeSegmentResult holds all calculated statistics for a single segment.
+type GpxAnalyzeSegmentResult struct {
+	// General
+	StartTime time.Time
+	EndTime   time.Time
+	Duration  float64
+	Points    int
+	Length2D  float64
+	Length3D  float64
+	// Moving
+	MovingTime      float64
+	StoppedTime     float64
+	MovingDistance  float64
+	StoppedDistance float64
+	// Bounding Box
+	MaxLatitude  float64
+	MaxLongitude float64
+	MinLatitude  float64
+	MinLongitude float64
+	// Elevation
+	UphillWMA          float64 // Weighted Moving Average
+	DownhillWMA        float64
+	UphillUnfiltered   float64
+	DownhillUnfiltered float64
+	// Point Details for verbose output
+	PointDetails []GpxAnalyzePointDetail
+}
+
+// GpxAnalyzePointDetail holds detailed information for a single track point.
+type GpxAnalyzePointDetail struct {
+	Timestamp          time.Time
+	TimeDifference     int64 // in seconds from previous point
+	Latitude           float64
+	Longitude          float64
+	Distance           float64 // in meters from previous point
+	Elevation          float64
+	CumulativeUphill   float64
+	CumulativeDownhill float64
+}
+
+// GPXAnalyzeRequest represents GPX data for GPX analyze request.
+type GPXAnalyzeRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		GPXData string // base64 encoded GPX XML string
+	}
+}
+
+// GPXAnalyzeResponse represents modified GPX data for GPX analyze response.
+type GPXAnalyzeResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		GPXData          string // base64 encoded GPX XML string
+		GpxAnalyzeResult GpxAnalyzeResult
+		IsError          bool
+		Error            ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
 // Request  : Client -> ContoursRequest  -> Service
 // Response : Client <- ContoursResponse <- Service
 // --------------------------------------------------------------------------------
@@ -274,6 +374,104 @@ type HillshadeResponse struct {
 		AltitudeOfLight      uint
 		ShadingVariant       string
 		Hillshades           []Hillshade
+		IsError              bool
+		Error                ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> SlopeRequest  -> Service
+// Response : Client <- SlopeResponse <- Service
+// --------------------------------------------------------------------------------
+
+// SlopeRequest represents coordinates and settings for slope request.
+type SlopeRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		GradientAlgorithm    string // Horn, ZevenbergenThorne
+		ColorTextFileContent []string
+	}
+}
+
+// Slope represents compressed slope object (PNG  or GeoTIFF) for one tile.
+type Slope struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+	BoundingBox WGS84BoundingBox
+}
+
+// SlopeResponse represents slope objects for slope response.
+type SlopeResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		GradientAlgorithm    string
+		ColorTextFileContent []string
+		Slopes               []Slope
+		IsError              bool
+		Error                ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> AspectRequest  -> Service
+// Response : Client <- AspectResponse <- Service
+// --------------------------------------------------------------------------------
+
+// AspectRequest represents coordinates and settings for aspect request.
+type AspectRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		GradientAlgorithm    string // Horn, ZevenbergenThorne
+		ColorTextFileContent []string
+	}
+}
+
+// Aspect represents compressed slope object (PNG  or GeoTIFF) for one tile.
+type Aspect struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+	BoundingBox WGS84BoundingBox
+}
+
+// AspectResponse represents slope objects for aspect response.
+type AspectResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		GradientAlgorithm    string
+		ColorTextFileContent []string
+		Aspects              []Aspect
 		IsError              bool
 		Error                ErrorObject
 	}
@@ -598,4 +796,72 @@ func runCommand(program string, args []string) (commandExitStatus int, commandOu
 
 	commandExitStatus = waitStatus.ExitStatus()
 	return
+}
+
+/*
+verifyColorTextFileContent checks the content of a text file, passed as a slice of strings.
+- The total content size must not exceed 12 KB.
+- The content must only contain printable characters.
+- The content must consist of multiple lines.
+*/
+func verifyColorTextFileContent(filecontent []string) error {
+	const maxFileSize = 12 * 1024 // 12 KB
+
+	// Check if the filecontent contains more than one line.
+	if len(filecontent) <= 1 {
+		return errors.New("color text file must contain multiple lines")
+	}
+
+	var totalSize int
+	// Iterate through each line of the filecontent.
+	for _, line := range filecontent {
+		// Adds the length of the line and one byte for the newline character to the total size.
+		totalSize += len(line) + 1
+
+		// Iterate through each character of the line.
+		for _, char := range line {
+			// unicode.IsPrint checks if a character is printable.
+			// Printable characters include letters, numbers, punctuation, symbols, and the ASCII space character.
+			if !unicode.IsPrint(char) {
+				return fmt.Errorf("invalid, non-printable character found in color text file: %q", char)
+			}
+		}
+	}
+
+	// Since the last line does not have a trailing newline, one byte is subtracted.
+	if len(filecontent) > 0 {
+		totalSize--
+	}
+
+	// Check if the total size exceeds the maximum of 12 KB.
+	if totalSize > maxFileSize {
+		return fmt.Errorf("color text file with size of %d bytes exceeds the maximum of %d bytes", totalSize, maxFileSize)
+	}
+
+	return nil
+}
+
+/*
+createColorTextFile creates 'color-text-file' from given content passed as a slice of strings.
+*/
+func createColorTextFile(filename string, filecontent []string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	for _, line := range filecontent {
+		_, err := writer.WriteString(line + "\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	err = writer.Flush()
+	if err != nil {
+		return err
+	}
+	return nil
 }
