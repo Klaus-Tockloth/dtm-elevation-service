@@ -343,8 +343,8 @@ func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradien
 	aspectColorWebmercatoPNG := filepath.Join(tempDir, tile.Index+".aspect.color.webmercator.png")
 
 	// 1. create native aspect with 'gdaldem aspect'
-	// e.g. gdaldem aspect dgm1_32_497_5670_1_he.tif 32_497_5670_hangexposition.utm.tif -alg Horn -compute_edges -zero_for_flat
-	commandExitStatus, commandOutput, err := runCommand("gdaldem", []string{"aspect", inputGeoTIFF, aspectUTMGeoTIFF, "-alg", gradientAlgorithm, "-compute_edges", "-zero_for_flat"})
+	// e.g. gdaldem aspect dgm1_32_497_5670_1_he.tif 32_497_5670_hangexposition.utm.tif -alg Horn -compute_edges
+	commandExitStatus, commandOutput, err := runCommand("gdaldem", []string{"aspect", inputGeoTIFF, aspectUTMGeoTIFF, "-alg", gradientAlgorithm, "-compute_edges"})
 	if err != nil {
 		return aspect, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 	}

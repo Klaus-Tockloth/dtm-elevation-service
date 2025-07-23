@@ -10,6 +10,7 @@ Releases:
 - v1.1.0 - 2025-06-10: contours added, hillshading added, origin added to point
 - v1.1.1 - 2025-06-11: valid equidistance 0.2-25.0 m
 - v1.2.0 - 2025-07-14: added: aspect, slope, gpx analyze
+- v1.2.1 - 2025-07-23: aspect: gdaldem option -zero_for_flat removed
 
 Author:
 - Klaus Tockloth
@@ -61,8 +62,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.2.0"
-	progDate      = "2025-07-14"
+	progVersion   = "v1.2.1"
+	progDate      = "2025-07-23"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
