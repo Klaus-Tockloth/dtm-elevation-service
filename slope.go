@@ -355,7 +355,7 @@ func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradient
 	switch strings.ToLower(outputFormat) {
 	case "geotiff":
 		// 2. colorize slope with 'gdaldem color-relief'
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", slopeUTMGeoTIFF, colorTextFile, slopeColorUTMGeoTIFF, "-alpha", "-nearest_color_entry"})
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", slopeUTMGeoTIFF, colorTextFile, slopeColorUTMGeoTIFF, "-alpha"})
 		if err != nil {
 			return slope, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -378,8 +378,8 @@ func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradient
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 3. colorize slope with 'gdaldem color-relief' (creates PNG file)
-		// e.g. gdaldem color-relief 32_497_5670_hangneigung.webmercator.tif slope-colors.txt 32_497_5670_hangneigung.webmercator.png -alpha -nearest_color_entry
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", slopeWebmercatorGeoTIFF, colorTextFile, slopeColorWebmercatoPNG, "-alpha", "-nearest_color_entry"})
+		// e.g. gdaldem color-relief 32_497_5670_hangneigung.webmercator.tif slope-colors.txt 32_497_5670_hangneigung.webmercator.png -alpha
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", slopeWebmercatorGeoTIFF, colorTextFile, slopeColorWebmercatoPNG, "-alpha"})
 		if err != nil {
 			return slope, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -402,7 +402,7 @@ func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradient
 		return slope, fmt.Errorf("unsupported format [%s]", outputFormat)
 	}
 
-	// set contour return structure
+	// set slope return structure
 	slope.Data = data
 	slope.DataFormat = outputFormat
 	slope.Actuality = tile.Actuality

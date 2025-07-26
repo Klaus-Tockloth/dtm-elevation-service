@@ -11,6 +11,7 @@ Releases:
 - v1.1.1 - 2025-06-11: valid equidistance 0.2-25.0 m
 - v1.2.0 - 2025-07-14: added: aspect, slope, gpx analyze
 - v1.2.1 - 2025-07-23: aspect: gdaldem option -zero_for_flat removed
+- v1.3.0 - 2025-07-26: added: tpi, tri, ri, rawtif; option '-nearest_color_entry' in 'gdaldem color-relief' removed
 
 Author:
 - Klaus Tockloth
@@ -62,8 +63,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.2.1"
-	progDate      = "2025-07-23"
+	progVersion   = "v1.3.0"
+	progDate      = "2025-07-26"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
@@ -96,6 +97,10 @@ var (
 	HillshadeRequests  uint64
 	SlopeRequests      uint64
 	AspectRequests     uint64
+	TPIRequests        uint64
+	TRIRequests        uint64
+	RIRequests         uint64
+	RawTIFRequests     uint64
 )
 
 /*
@@ -196,6 +201,18 @@ func main() {
 	http.HandleFunc("POST /v1/aspect", aspectRequest)
 	http.HandleFunc("OPTIONS /v1/aspect", corsOptionsHandler)
 
+	http.HandleFunc("POST /v1/tpi", tpiRequest)
+	http.HandleFunc("OPTIONS /v1/tpi", corsOptionsHandler)
+
+	http.HandleFunc("POST /v1/tri", triRequest)
+	http.HandleFunc("OPTIONS /v1/tri", corsOptionsHandler)
+
+	http.HandleFunc("POST /v1/ri", riRequest)
+	http.HandleFunc("OPTIONS /v1/ri", corsOptionsHandler)
+
+	http.HandleFunc("POST /v1/rawtif", rawtifRequest)
+	http.HandleFunc("OPTIONS /v1/rawtif", corsOptionsHandler)
+
 	// handle unsupported routes or methods
 	http.HandleFunc("/", unsupportedRequest)
 
@@ -288,6 +305,10 @@ func logStatistics() {
 	currentHillshadeRequests := atomic.LoadUint64(&HillshadeRequests)
 	currentSlopeRequests := atomic.LoadUint64(&SlopeRequests)
 	currentAspectRequests := atomic.LoadUint64(&AspectRequests)
+	currentTPIRequests := atomic.LoadUint64(&TPIRequests)
+	currentTRIRequests := atomic.LoadUint64(&TRIRequests)
+	currentRIRequests := atomic.LoadUint64(&RIRequests)
+	currentRawTIFRequests := atomic.LoadUint64(&RawTIFRequests)
 
 	// reset statistics
 	atomic.StoreUint64(&PointRequests, 0)
@@ -300,6 +321,10 @@ func logStatistics() {
 	atomic.StoreUint64(&HillshadeRequests, 0)
 	atomic.StoreUint64(&SlopeRequests, 0)
 	atomic.StoreUint64(&AspectRequests, 0)
+	atomic.StoreUint64(&TPIRequests, 0)
+	atomic.StoreUint64(&TRIRequests, 0)
+	atomic.StoreUint64(&RIRequests, 0)
+	atomic.StoreUint64(&RawTIFRequests, 0)
 
 	// log statistics
 	slog.Info("load statistics",
@@ -313,6 +338,10 @@ func logStatistics() {
 		"HillshadeRequests", currentHillshadeRequests,
 		"SlopeRequests", currentSlopeRequests,
 		"AspectRequests", currentAspectRequests,
+		"TPIRequests", currentTPIRequests,
+		"TRIRequests", currentTRIRequests,
+		"RIRequests", currentRIRequests,
+		"RawTIFRequests", currentRawTIFRequests,
 	)
 }
 

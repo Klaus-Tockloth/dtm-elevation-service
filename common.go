@@ -42,6 +42,14 @@ const (
 	TypeSlopeResponse      = "SlopeResponse"
 	TypeAspectRequest      = "AspectRequest"
 	TypeAspectResponse     = "AspectResponse"
+	TypeTPIRequest         = "TPIRequest"
+	TypeTPIResponse        = "TPIResponse"
+	TypeTRIRequest         = "TRIRequest"
+	TypeTRIResponse        = "TRIResponse"
+	TypeRIRequest          = "RIRequest"
+	TypeRIResponse         = "RIResponse"
+	TypeRawTIFRequest      = "RawTIFRequest"
+	TypeRawTIFResponse     = "RawTIFResponse"
 )
 
 // request body limits (in bytes, for security reasons)
@@ -53,6 +61,10 @@ const (
 	MaxHillshadeRequestBodySize  = 4 * 1024
 	MaxSlopeRequestBodySize      = 16 * 1024
 	MaxAspectRequestBodySize     = 16 * 1024
+	MaxTPIRequestBodySize        = 16 * 1024
+	MaxTRIRequestBodySize        = 16 * 1024
+	MaxRIRequestBodySize         = 16 * 1024
+	MaxRawTIFRequestBodySize     = 4 * 1024
 )
 
 // ErrorObject represents error details.
@@ -347,7 +359,7 @@ type HillshadeRequest struct {
 	}
 }
 
-// Hillshade represents compressed hillshade object (PNG  or GeoTIFF) for one tile.
+// Hillshade represents compressed hillshade object (PNG  or GeoRawTIFF) for one tile.
 type Hillshade struct {
 	Data        []byte
 	DataFormat  string
@@ -399,7 +411,7 @@ type SlopeRequest struct {
 	}
 }
 
-// Slope represents compressed slope object (PNG  or GeoTIFF) for one tile.
+// Slope represents compressed slope object (PNG  or GeoRawTIFF) for one tile.
 type Slope struct {
 	Data        []byte
 	DataFormat  string
@@ -448,7 +460,7 @@ type AspectRequest struct {
 	}
 }
 
-// Aspect represents compressed slope object (PNG  or GeoTIFF) for one tile.
+// Aspect represents compressed slope object (PNG  or GeoRawTIFF) for one tile.
 type Aspect struct {
 	Data        []byte
 	DataFormat  string
@@ -474,6 +486,187 @@ type AspectResponse struct {
 		Aspects              []Aspect
 		IsError              bool
 		Error                ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> TPIRequest  -> Service
+// Response : Client <- TPIResponse <- Service
+// --------------------------------------------------------------------------------
+
+// TPIRequest represents coordinates and settings for TPI request.
+type TPIRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+	}
+}
+
+// TPI represents compressed TPI object (PNG  or GeoRawTIFF) for one tile.
+type TPI struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+	BoundingBox WGS84BoundingBox
+}
+
+// TPIResponse represents TPI objects for aspect response.
+type TPIResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+		TPIs                 []TPI
+		IsError              bool
+		Error                ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> TRIRequest  -> Service
+// Response : Client <- TRIResponse <- Service
+// --------------------------------------------------------------------------------
+
+// TRIRequest represents coordinates and settings for TRI request.
+type TRIRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+	}
+}
+
+// TRI represents compressed TRI object (PNG  or GeoRawTIFF) for one tile.
+type TRI struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+	BoundingBox WGS84BoundingBox
+}
+
+// TRIResponse represents TRI objects for aspect response.
+type TRIResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+		TRIs                 []TRI
+		IsError              bool
+		Error                ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> RIRequest  -> Service
+// Response : Client <- RIResponse <- Service
+// --------------------------------------------------------------------------------
+
+// RIRequest represents coordinates and settings for RI request.
+type RIRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+	}
+}
+
+// RI represents compressed RI object (PNG  or GeoRawTIFF) for one tile.
+type RI struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+	BoundingBox WGS84BoundingBox
+}
+
+// RIResponse represents slope objects for RI response.
+type RIResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+		RIs                  []RI
+		IsError              bool
+		Error                ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> RawTIFRequest  -> Service
+// Response : Client <- RawTIFResponse <- Service
+// --------------------------------------------------------------------------------
+
+// RawTIFRequest represents coordinates and settings for RawTIF request.
+type RawTIFRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone     int
+		Easting  float64
+		Northing float64
+	}
+}
+
+// RawTIF represents compressed RawTIF object for one tile.
+type RawTIF struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+}
+
+// RawTIFResponse represents RawTIF objects for RawTIF response.
+type RawTIFResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone     int
+		Easting  float64
+		Northing float64
+		RawTIFs  []RawTIF
+		IsError  bool
+		Error    ErrorObject
 	}
 }
 
@@ -552,7 +745,7 @@ func getElevationForPoint(longitude, latitude float64) (float64, TileMetadata, e
 	// retrieve elevation
 	elevation, err = getElevationFromUTM(x, y, tile.Path)
 	if err != nil {
-		err = fmt.Errorf("error [%w] getting elevation from GeoTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, x, y, zone)
+		err = fmt.Errorf("error [%w] getting elevation from GeoRawTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, x, y, zone)
 		return elevation, tile, err
 	}
 
@@ -561,14 +754,14 @@ func getElevationForPoint(longitude, latitude float64) (float64, TileMetadata, e
 		// lookup for tile (secondary tile / variant 2, e.g. '32_437_5614_2')
 		tile, err = getGeotiffTile(x, y, zone, 2)
 		if err != nil {
-			err = fmt.Errorf("error [%w] getting GeoTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, x, y, zone)
+			err = fmt.Errorf("error [%w] getting GeoRawTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, x, y, zone)
 			return elevation, tile, err
 		}
 
 		// retrieve elevation
 		elevation, err = getElevationFromUTM(x, y, tile.Path)
 		if err != nil {
-			err = fmt.Errorf("error [%w] getting elevation from GeoTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, x, y, zone)
+			err = fmt.Errorf("error [%w] getting elevation from GeoRawTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, x, y, zone)
 			return elevation, tile, err
 		}
 
@@ -577,14 +770,14 @@ func getElevationForPoint(longitude, latitude float64) (float64, TileMetadata, e
 			// lookup for tile (tertiary tile / variant 3, e.g. '32_437_5614_3')
 			tile, err = getGeotiffTile(x, y, zone, 3)
 			if err != nil {
-				err = fmt.Errorf("error [%w] getting GeoTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, x, y, zone)
+				err = fmt.Errorf("error [%w] getting GeoRawTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, x, y, zone)
 				return elevation, tile, err
 			}
 
 			// retrieve elevation
 			elevation, err = getElevationFromUTM(x, y, tile.Path)
 			if err != nil {
-				err = fmt.Errorf("error [%w] getting elevation from GeoTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, x, y, zone)
+				err = fmt.Errorf("error [%w] getting elevation from GeoRawTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, x, y, zone)
 				return elevation, tile, err
 			}
 		}
@@ -691,7 +884,7 @@ func getTileUTM(longitude, latitude float64) (TileMetadata, int, float64, float6
 	}
 	tile, err = getGeotiffTile(x, y, neighborZone, 1)
 	if err != nil {
-		err = fmt.Errorf("error [%w] getting GeoTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, x, y, zone)
+		err = fmt.Errorf("error [%w] getting GeoRawTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, x, y, zone)
 		return tile, 0, 0.0, 0.0, err
 	}
 
@@ -717,7 +910,7 @@ func getElevationForUTMPoint(zone int, easting, northing float64) (float64, Tile
 	// retrieve elevation
 	elevation, err = getElevationFromUTM(easting, northing, tile.Path)
 	if err != nil {
-		err = fmt.Errorf("error [%w] getting elevation from GeoTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, easting, northing, zone)
+		err = fmt.Errorf("error [%w] getting elevation from GeoRawTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, easting, northing, zone)
 		return elevation, tile, err
 	}
 
@@ -726,14 +919,14 @@ func getElevationForUTMPoint(zone int, easting, northing float64) (float64, Tile
 		// lookup for tile (secondary tile / variant 2, e.g. '32_437_5614_2')
 		tile, err = getGeotiffTile(easting, northing, zone, 2)
 		if err != nil {
-			err = fmt.Errorf("error [%w] getting GeoTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, easting, northing, zone)
+			err = fmt.Errorf("error [%w] getting GeoRawTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, easting, northing, zone)
 			return elevation, tile, err
 		}
 
 		// retrieve elevation
 		elevation, err = getElevationFromUTM(easting, northing, tile.Path)
 		if err != nil {
-			err = fmt.Errorf("error [%w] getting elevation from GeoTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, easting, northing, zone)
+			err = fmt.Errorf("error [%w] getting elevation from GeoRawTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, easting, northing, zone)
 			return elevation, tile, err
 		}
 
@@ -742,14 +935,14 @@ func getElevationForUTMPoint(zone int, easting, northing float64) (float64, Tile
 			// lookup for tile (tertiary tile / variant 3, e.g. '32_437_5614_3')
 			tile, err = getGeotiffTile(easting, northing, zone, 3)
 			if err != nil {
-				err = fmt.Errorf("error [%w] getting GeoTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, easting, northing, zone)
+				err = fmt.Errorf("error [%w] getting GeoRawTIFF tile for UTM easting: %.3f, northing: %.3f, zone: %d", err, easting, northing, zone)
 				return elevation, tile, err
 			}
 
 			// retrieve elevation
 			elevation, err = getElevationFromUTM(easting, northing, tile.Path)
 			if err != nil {
-				err = fmt.Errorf("error [%w] getting elevation from GeoTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, easting, northing, zone)
+				err = fmt.Errorf("error [%w] getting elevation from GeoRawTIFF [%s] for UTM easting: %.3f, northing: %.3f, zone: %d", err, tile.Path, easting, northing, zone)
 				return elevation, tile, err
 			}
 		}
@@ -768,6 +961,7 @@ func runCommand(program string, args []string) (commandExitStatus int, commandOu
 
 	// full command for logging
 	fullCommand := program + " " + strings.Join(cmd.Args, " ")
+	//	fmt.Printf("Full command: %v\n", fullCommand)
 
 	var waitStatus syscall.WaitStatus
 	if err != nil {

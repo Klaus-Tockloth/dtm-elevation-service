@@ -355,7 +355,7 @@ func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradien
 	switch strings.ToLower(outputFormat) {
 	case "geotiff":
 		// 2. colorize aspect with 'gdaldem color-relief'
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", aspectUTMGeoTIFF, colorTextFile, aspectColorUTMGeoTIFF, "-alpha", "-nearest_color_entry"})
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", aspectUTMGeoTIFF, colorTextFile, aspectColorUTMGeoTIFF, "-alpha"})
 		if err != nil {
 			return aspect, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -378,8 +378,8 @@ func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradien
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 3. colorize aspect with 'gdaldem color-relief' (creates PNG file)
-		// e.g. gdaldem color-relief 32_497_5670_hangexposition.webmercator.tif aspect-colors.txt 32_497_5670_hangexposition.webmercator.png -alpha -nearest_color_entry
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", aspectWebmercatorGeoTIFF, colorTextFile, aspectColorWebmercatoPNG, "-alpha", "-nearest_color_entry"})
+		// e.g. gdaldem color-relief 32_497_5670_hangexposition.webmercator.tif aspect-colors.txt 32_497_5670_hangexposition.webmercator.png -alpha
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", aspectWebmercatorGeoTIFF, colorTextFile, aspectColorWebmercatoPNG, "-alpha"})
 		if err != nil {
 			return aspect, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -402,7 +402,7 @@ func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradien
 		return aspect, fmt.Errorf("unsupported format [%s]", outputFormat)
 	}
 
-	// set contour return structure
+	// set aspect return structure
 	aspect.Data = data
 	aspect.DataFormat = outputFormat
 	aspect.Actuality = tile.Actuality

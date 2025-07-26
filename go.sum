@@ -780,6 +780,8 @@ github.com/airbusgeo/godal v0.0.13 h1:+5gqoTPSSEUoqCeHsm6hf3UF6MFsXxl2KbhftbJAxO
 github.com/airbusgeo/godal v0.0.13/go.mod h1:OctoqHTqjtTNm/a6u6ESfG61jcxs9qh7EwvunPn1BRA=
 github.com/airbusgeo/godal v0.0.14 h1:Ctg+ZLjBRtYggdK+/WsU+N+yJlZPJmn5jBSAmFIDBUc=
 github.com/airbusgeo/godal v0.0.14/go.mod h1:Mpn/6exBzEbIx4DaG2rIjCmAiF9Ww4SJN2ZtwVsSwCo=
+github.com/airbusgeo/godal v0.0.15 h1:AoF99qR7FC9rdM8NcGPvMmZyM63BQGrIZuspN9Gxb4Y=
+github.com/airbusgeo/godal v0.0.15/go.mod h1:Mpn/6exBzEbIx4DaG2rIjCmAiF9Ww4SJN2ZtwVsSwCo=
 github.com/airbusgeo/osio v0.1.3 h1:IxNf1co8lxwqJCziV+5qZyZbkT6JYdmR3L0oomNffrk=
 github.com/airbusgeo/osio v0.1.3/go.mod h1:d4qlaDSgsMilFoi+/62vwFZStuYIHIDovYzIRjTK+Jw=
 github.com/ajstarks/deck v0.0.0-20200831202436-30c9fc6549a9/go.mod h1:JynElWSGnm/4RlzPXRlREEwqTHAN3T56Bv2ITsFT3gY=

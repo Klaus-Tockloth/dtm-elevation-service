@@ -2,7 +2,6 @@
 #
 # Abfrage der Hangexposition für eine Kachel mit 1000x1000 Meter. 
 
-# Kachel durch UTM-Koordinaten referenziert.
 postdata=$(cat <<EOF
 {
   "Type": "AspectRequest",
