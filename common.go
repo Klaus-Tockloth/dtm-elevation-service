@@ -408,6 +408,7 @@ type SlopeRequest struct {
 		Latitude             float64
 		GradientAlgorithm    string // Horn, ZevenbergenThorne
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 	}
 }
 
@@ -434,6 +435,7 @@ type SlopeResponse struct {
 		Latitude             float64
 		GradientAlgorithm    string
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 		Slopes               []Slope
 		IsError              bool
 		Error                ErrorObject
@@ -457,6 +459,7 @@ type AspectRequest struct {
 		Latitude             float64
 		GradientAlgorithm    string // Horn, ZevenbergenThorne
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 	}
 }
 
@@ -483,6 +486,7 @@ type AspectResponse struct {
 		Latitude             float64
 		GradientAlgorithm    string
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 		Aspects              []Aspect
 		IsError              bool
 		Error                ErrorObject
@@ -505,6 +509,7 @@ type TPIRequest struct {
 		Longitude            float64
 		Latitude             float64
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 	}
 }
 
@@ -530,6 +535,7 @@ type TPIResponse struct {
 		Longitude            float64
 		Latitude             float64
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 		TPIs                 []TPI
 		IsError              bool
 		Error                ErrorObject
@@ -552,6 +558,7 @@ type TRIRequest struct {
 		Longitude            float64
 		Latitude             float64
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 	}
 }
 
@@ -577,6 +584,7 @@ type TRIResponse struct {
 		Longitude            float64
 		Latitude             float64
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 		TRIs                 []TRI
 		IsError              bool
 		Error                ErrorObject
@@ -599,6 +607,7 @@ type RIRequest struct {
 		Longitude            float64
 		Latitude             float64
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 	}
 }
 
@@ -624,6 +633,7 @@ type RIResponse struct {
 		Longitude            float64
 		Latitude             float64
 		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
 		RIs                  []RI
 		IsError              bool
 		Error                ErrorObject

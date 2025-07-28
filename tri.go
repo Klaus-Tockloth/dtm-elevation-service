@@ -149,7 +149,7 @@ func triRequest(writer http.ResponseWriter, request *http.Request) {
 
 	// build tri for all existing tiles
 	for _, tile := range tiles {
-		tri, err := generateTRIObjectForTile(tile, outputFormat, triRequest.Attributes.ColorTextFileContent)
+		tri, err := generateTRIObjectForTile(tile, outputFormat, triRequest.Attributes.ColorTextFileContent, triRequest.Attributes.ColoringAlgorithm)
 		if err != nil {
 			slog.Warn("tri request: error generating tri object for tile", "error", err, "ID", triRequest.ID)
 			triResponse.Attributes.Error.Code = "9120"
@@ -170,6 +170,7 @@ func triRequest(writer http.ResponseWriter, request *http.Request) {
 	triResponse.Attributes.Longitude = triRequest.Attributes.Longitude
 	triResponse.Attributes.Latitude = triRequest.Attributes.Latitude
 	triResponse.Attributes.ColorTextFileContent = triRequest.Attributes.ColorTextFileContent
+	triResponse.Attributes.ColoringAlgorithm = triRequest.Attributes.ColoringAlgorithm
 
 	// success response
 	buildTRIResponse(writer, http.StatusOK, triResponse)
@@ -247,6 +248,13 @@ func verifyTRIRequestData(request *http.Request, triRequest TRIRequest) error {
 		return errors.New("invalid color text file content (%w)")
 	}
 
+	// verify coloring algorithm
+	if triRequest.Attributes.ColoringAlgorithm != "" {
+		if !(triRequest.Attributes.ColoringAlgorithm == "interpolation" || triRequest.Attributes.ColoringAlgorithm == "rounding") {
+			return errors.New("unsupported coloring algorithm (not 'interpolation' or 'rounding')")
+		}
+	}
+
 	return nil
 }
 
@@ -310,7 +318,7 @@ func buildTRIResponse(writer http.ResponseWriter, httpStatus int, triResponse TR
 /*
 generateTRIObjectForTile builds tri object for given tile index.
 */
-func generateTRIObjectForTile(tile TileMetadata, outputFormat string, colorTextFileContent []string) (TRI, error) {
+func generateTRIObjectForTile(tile TileMetadata, outputFormat string, colorTextFileContent []string, coloringAlgorithm string) (TRI, error) {
 	var tri TRI
 	var boundingBox WGS84BoundingBox
 
@@ -350,7 +358,11 @@ func generateTRIObjectForTile(tile TileMetadata, outputFormat string, colorTextF
 	case "geotiff":
 		// 2. colorize tri with 'gdaldem color-relief'
 		// e.g. gdaldem color-relief 602_5251_tri.utm.tif tri-colors.txt 602_5251_tri.utm.png -alpha
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", triUTMGeoTIFF, colorTextFile, triColorUTMGeoTIFF, "-alpha"})
+		options := []string{"color-relief", triUTMGeoTIFF, colorTextFile, triColorUTMGeoTIFF, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return tri, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -374,7 +386,11 @@ func generateTRIObjectForTile(tile TileMetadata, outputFormat string, colorTextF
 
 		// 3. colorize tri with 'gdaldem color-relief' (creates PNG file)
 		// e.g. gdaldem color-relief 602_5251_tri.webmercator.tif tri-colors.txt 602_5251_tri.webmercator.png -alpha
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", triWebmercatorGeoTIFF, colorTextFile, triColorWebmercatoPNG, "-alpha"})
+		options := []string{"color-relief", triWebmercatorGeoTIFF, colorTextFile, triColorWebmercatoPNG, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return tri, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}

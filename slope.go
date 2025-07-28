@@ -149,7 +149,7 @@ func slopeRequest(writer http.ResponseWriter, request *http.Request) {
 
 	// build slope for all existing tiles
 	for _, tile := range tiles {
-		slope, err := generateSlopeObjectForTile(tile, outputFormat, slopeRequest.Attributes.GradientAlgorithm, slopeRequest.Attributes.ColorTextFileContent)
+		slope, err := generateSlopeObjectForTile(tile, outputFormat, slopeRequest.Attributes.GradientAlgorithm, slopeRequest.Attributes.ColorTextFileContent, slopeRequest.Attributes.ColoringAlgorithm)
 		if err != nil {
 			slog.Warn("slope request: error generating slope object for tile", "error", err, "ID", slopeRequest.ID)
 			slopeResponse.Attributes.Error.Code = "6120"
@@ -171,6 +171,7 @@ func slopeRequest(writer http.ResponseWriter, request *http.Request) {
 	slopeResponse.Attributes.Latitude = slopeRequest.Attributes.Latitude
 	slopeResponse.Attributes.GradientAlgorithm = slopeRequest.Attributes.GradientAlgorithm
 	slopeResponse.Attributes.ColorTextFileContent = slopeRequest.Attributes.ColorTextFileContent
+	slopeResponse.Attributes.ColoringAlgorithm = slopeRequest.Attributes.ColoringAlgorithm
 
 	// success response
 	buildSlopeResponse(writer, http.StatusOK, slopeResponse)
@@ -253,6 +254,13 @@ func verifySlopeRequestData(request *http.Request, slopeRequest SlopeRequest) er
 		return errors.New("invalid color text file content (%w)")
 	}
 
+	// verify coloring algorithm
+	if slopeRequest.Attributes.ColoringAlgorithm != "" {
+		if !(slopeRequest.Attributes.ColoringAlgorithm == "interpolation" || slopeRequest.Attributes.ColoringAlgorithm == "rounding") {
+			return errors.New("unsupported coloring algorithm (not 'interpolation' or 'rounding')")
+		}
+	}
+
 	return nil
 }
 
@@ -316,7 +324,7 @@ func buildSlopeResponse(writer http.ResponseWriter, httpStatus int, slopeRespons
 /*
 generateSlopeObjectForTile builds slope object for given tile index.
 */
-func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradientAlgorithm string, colorTextFileContent []string) (Slope, error) {
+func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradientAlgorithm string, colorTextFileContent []string, coloringAlgorithm string) (Slope, error) {
 	var slope Slope
 	var boundingBox WGS84BoundingBox
 
@@ -355,7 +363,11 @@ func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradient
 	switch strings.ToLower(outputFormat) {
 	case "geotiff":
 		// 2. colorize slope with 'gdaldem color-relief'
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", slopeUTMGeoTIFF, colorTextFile, slopeColorUTMGeoTIFF, "-alpha"})
+		options := []string{"color-relief", slopeUTMGeoTIFF, colorTextFile, slopeColorUTMGeoTIFF, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return slope, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -379,7 +391,11 @@ func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradient
 
 		// 3. colorize slope with 'gdaldem color-relief' (creates PNG file)
 		// e.g. gdaldem color-relief 32_497_5670_hangneigung.webmercator.tif slope-colors.txt 32_497_5670_hangneigung.webmercator.png -alpha
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", slopeWebmercatorGeoTIFF, colorTextFile, slopeColorWebmercatoPNG, "-alpha"})
+		options := []string{"color-relief", slopeWebmercatorGeoTIFF, colorTextFile, slopeColorWebmercatoPNG, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return slope, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}

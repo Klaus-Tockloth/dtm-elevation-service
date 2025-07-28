@@ -28,13 +28,14 @@ postdata=$(cat <<EOF
       "60 150 0 0 255",
       "90 0 0 0 255",
       "nv 0 0 0 0"
-    ]
+    ],
+    "ColoringAlgorithm": "rounding"
   }
 }
 EOF
 )
 
-echo "postdata =\n$postdata"
+echo "postdata = $postdata"
 
 # Führe den curl-Befehl aus und fange die Antwort ab.
 # --silent: Unterdrückt Fortschrittsanzeigen und Fehlermeldungen von curl.

@@ -12,6 +12,7 @@ Releases:
 - v1.2.0 - 2025-07-14: added: aspect, slope, gpx analyze
 - v1.2.1 - 2025-07-23: aspect: gdaldem option -zero_for_flat removed
 - v1.3.0 - 2025-07-26: added: tpi, tri, ri, rawtif; option '-nearest_color_entry' in 'gdaldem color-relief' removed
+- v1.4.0 - 2025-07-28: coloring options added: interpolation, rounding
 
 Author:
 - Klaus Tockloth
@@ -63,8 +64,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.3.0"
-	progDate      = "2025-07-26"
+	progVersion   = "v1.4.0"
+	progDate      = "2025-07-28"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"

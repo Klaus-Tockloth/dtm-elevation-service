@@ -149,7 +149,7 @@ func aspectRequest(writer http.ResponseWriter, request *http.Request) {
 
 	// build aspect for all existing tiles
 	for _, tile := range tiles {
-		aspect, err := generateAspectObjectForTile(tile, outputFormat, aspectRequest.Attributes.GradientAlgorithm, aspectRequest.Attributes.ColorTextFileContent)
+		aspect, err := generateAspectObjectForTile(tile, outputFormat, aspectRequest.Attributes.GradientAlgorithm, aspectRequest.Attributes.ColorTextFileContent, aspectRequest.Attributes.ColoringAlgorithm)
 		if err != nil {
 			slog.Warn("aspect request: error generating aspect object for tile", "error", err, "ID", aspectRequest.ID)
 			aspectResponse.Attributes.Error.Code = "7120"
@@ -171,6 +171,7 @@ func aspectRequest(writer http.ResponseWriter, request *http.Request) {
 	aspectResponse.Attributes.Latitude = aspectRequest.Attributes.Latitude
 	aspectResponse.Attributes.GradientAlgorithm = aspectRequest.Attributes.GradientAlgorithm
 	aspectResponse.Attributes.ColorTextFileContent = aspectRequest.Attributes.ColorTextFileContent
+	aspectResponse.Attributes.ColoringAlgorithm = aspectRequest.Attributes.ColoringAlgorithm
 
 	// success response
 	buildAspectResponse(writer, http.StatusOK, aspectResponse)
@@ -253,6 +254,12 @@ func verifyAspectRequestData(request *http.Request, aspectRequest AspectRequest)
 		return errors.New("invalid color text file content (%w)")
 	}
 
+	// verify coloring algorithm
+	if aspectRequest.Attributes.ColoringAlgorithm != "" {
+		if !(aspectRequest.Attributes.ColoringAlgorithm == "interpolation" || aspectRequest.Attributes.ColoringAlgorithm == "rounding") {
+			return errors.New("unsupported coloring algorithm (not 'interpolation' or 'rounding')")
+		}
+	}
 	return nil
 }
 
@@ -316,7 +323,7 @@ func buildAspectResponse(writer http.ResponseWriter, httpStatus int, aspectRespo
 /*
 generateAspectObjectForTile builds aspect object for given tile index.
 */
-func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradientAlgorithm string, colorTextFileContent []string) (Aspect, error) {
+func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradientAlgorithm string, colorTextFileContent []string, coloringAlgorithm string) (Aspect, error) {
 	var aspect Aspect
 	var boundingBox WGS84BoundingBox
 
@@ -355,7 +362,11 @@ func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradien
 	switch strings.ToLower(outputFormat) {
 	case "geotiff":
 		// 2. colorize aspect with 'gdaldem color-relief'
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", aspectUTMGeoTIFF, colorTextFile, aspectColorUTMGeoTIFF, "-alpha"})
+		options := []string{"color-relief", aspectUTMGeoTIFF, colorTextFile, aspectColorUTMGeoTIFF, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return aspect, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -379,7 +390,11 @@ func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradien
 
 		// 3. colorize aspect with 'gdaldem color-relief' (creates PNG file)
 		// e.g. gdaldem color-relief 32_497_5670_hangexposition.webmercator.tif aspect-colors.txt 32_497_5670_hangexposition.webmercator.png -alpha
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", aspectWebmercatorGeoTIFF, colorTextFile, aspectColorWebmercatoPNG, "-alpha"})
+		options := []string{"color-relief", aspectWebmercatorGeoTIFF, colorTextFile, aspectColorWebmercatoPNG, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return aspect, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}

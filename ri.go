@@ -149,7 +149,7 @@ func riRequest(writer http.ResponseWriter, request *http.Request) {
 
 	// build ri for all existing tiles
 	for _, tile := range tiles {
-		ri, err := generateRIObjectForTile(tile, outputFormat, riRequest.Attributes.ColorTextFileContent)
+		ri, err := generateRIObjectForTile(tile, outputFormat, riRequest.Attributes.ColorTextFileContent, riRequest.Attributes.ColoringAlgorithm)
 		if err != nil {
 			slog.Warn("ri request: error generating ri object for tile", "error", err, "ID", riRequest.ID)
 			riResponse.Attributes.Error.Code = "10120"
@@ -170,6 +170,7 @@ func riRequest(writer http.ResponseWriter, request *http.Request) {
 	riResponse.Attributes.Longitude = riRequest.Attributes.Longitude
 	riResponse.Attributes.Latitude = riRequest.Attributes.Latitude
 	riResponse.Attributes.ColorTextFileContent = riRequest.Attributes.ColorTextFileContent
+	riResponse.Attributes.ColoringAlgorithm = riRequest.Attributes.ColoringAlgorithm
 
 	// success response
 	buildRIResponse(writer, http.StatusOK, riResponse)
@@ -247,6 +248,13 @@ func verifyRIRequestData(request *http.Request, riRequest RIRequest) error {
 		return errors.New("invalid color text file content (%w)")
 	}
 
+	// verify coloring algorithm
+	if riRequest.Attributes.ColoringAlgorithm != "" {
+		if !(riRequest.Attributes.ColoringAlgorithm == "interpolation" || riRequest.Attributes.ColoringAlgorithm == "rounding") {
+			return errors.New("unsupported coloring algorithm (not 'interpolation' or 'rounding')")
+		}
+	}
+
 	return nil
 }
 
@@ -310,7 +318,7 @@ func buildRIResponse(writer http.ResponseWriter, httpStatus int, riResponse RIRe
 /*
 generateRIObjectForTile builds ri object for given tile index.
 */
-func generateRIObjectForTile(tile TileMetadata, outputFormat string, colorTextFileContent []string) (RI, error) {
+func generateRIObjectForTile(tile TileMetadata, outputFormat string, colorTextFileContent []string, coloringAlgorithm string) (RI, error) {
 	var ri RI
 	var boundingBox WGS84BoundingBox
 
@@ -348,7 +356,11 @@ func generateRIObjectForTile(tile TileMetadata, outputFormat string, colorTextFi
 	switch strings.ToLower(outputFormat) {
 	case "geotiff":
 		// 2. colorize ri with 'gdaldem color-relief'
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", riUTMGeoTIFF, colorTextFile, riColorUTMGeoTIFF, "-alpha"})
+		options := []string{"color-relief", riUTMGeoTIFF, colorTextFile, riColorUTMGeoTIFF, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return ri, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -370,7 +382,11 @@ func generateRIObjectForTile(tile TileMetadata, outputFormat string, colorTextFi
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 3. colorize ri with 'gdaldem color-relief' (creates PNG file)
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", riWebmercatorGeoTIFF, colorTextFile, riColorWebmercatoPNG, "-alpha"})
+		options := []string{"color-relief", riWebmercatorGeoTIFF, colorTextFile, riColorWebmercatoPNG, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return ri, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}

@@ -149,7 +149,7 @@ func tpiRequest(writer http.ResponseWriter, request *http.Request) {
 
 	// build tpi for all existing tiles
 	for _, tile := range tiles {
-		tpi, err := generateTPIObjectForTile(tile, outputFormat, tpiRequest.Attributes.ColorTextFileContent)
+		tpi, err := generateTPIObjectForTile(tile, outputFormat, tpiRequest.Attributes.ColorTextFileContent, tpiRequest.Attributes.ColoringAlgorithm)
 		if err != nil {
 			slog.Warn("tpi request: error generating tpi object for tile", "error", err, "ID", tpiRequest.ID)
 			tpiResponse.Attributes.Error.Code = "8120"
@@ -170,6 +170,7 @@ func tpiRequest(writer http.ResponseWriter, request *http.Request) {
 	tpiResponse.Attributes.Longitude = tpiRequest.Attributes.Longitude
 	tpiResponse.Attributes.Latitude = tpiRequest.Attributes.Latitude
 	tpiResponse.Attributes.ColorTextFileContent = tpiRequest.Attributes.ColorTextFileContent
+	tpiResponse.Attributes.ColoringAlgorithm = tpiRequest.Attributes.ColoringAlgorithm
 
 	// success response
 	buildTPIResponse(writer, http.StatusOK, tpiResponse)
@@ -247,6 +248,13 @@ func verifyTPIRequestData(request *http.Request, tpiRequest TPIRequest) error {
 		return errors.New("invalid color text file content (%w)")
 	}
 
+	// verify coloring algorithm
+	if tpiRequest.Attributes.ColoringAlgorithm != "" {
+		if !(tpiRequest.Attributes.ColoringAlgorithm == "interpolation" || tpiRequest.Attributes.ColoringAlgorithm == "rounding") {
+			return errors.New("unsupported coloring algorithm (not 'interpolation' or 'rounding')")
+		}
+	}
+
 	return nil
 }
 
@@ -310,7 +318,7 @@ func buildTPIResponse(writer http.ResponseWriter, httpStatus int, tpiResponse TP
 /*
 generateTPIObjectForTile builds tpi object for given tile index.
 */
-func generateTPIObjectForTile(tile TileMetadata, outputFormat string, colorTextFileContent []string) (TPI, error) {
+func generateTPIObjectForTile(tile TileMetadata, outputFormat string, colorTextFileContent []string, coloringAlgorithm string) (TPI, error) {
 	var tpi TPI
 	var boundingBox WGS84BoundingBox
 
@@ -348,7 +356,11 @@ func generateTPIObjectForTile(tile TileMetadata, outputFormat string, colorTextF
 	switch strings.ToLower(outputFormat) {
 	case "geotiff":
 		// 2. colorize tpi with 'gdaldem color-relief'
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", tpiUTMGeoTIFF, colorTextFile, tpiColorUTMGeoTIFF, "-alpha"})
+		options := []string{"color-relief", tpiUTMGeoTIFF, colorTextFile, tpiColorUTMGeoTIFF, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return tpi, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}
@@ -370,7 +382,11 @@ func generateTPIObjectForTile(tile TileMetadata, outputFormat string, colorTextF
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 3. colorize TPI with 'gdaldem color-relief' (creates PNG file)
-		commandExitStatus, commandOutput, err = runCommand("gdaldem", []string{"color-relief", tpiWebmercatorGeoTIFF, colorTextFile, tpiColorWebmercatoPNG, "-alpha"})
+		options := []string{"color-relief", tpiWebmercatorGeoTIFF, colorTextFile, tpiColorWebmercatoPNG, "-alpha"}
+		if coloringAlgorithm == "rounding" {
+			options = append(options, "-nearest_color_entry")
+		}
+		commandExitStatus, commandOutput, err = runCommand("gdaldem", options)
 		if err != nil {
 			return tpi, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 		}

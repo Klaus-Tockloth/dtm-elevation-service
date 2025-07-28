@@ -15,7 +15,7 @@ postdata=$(cat <<EOF
 EOF
 )
 
-echo "postdata =\n$postdata"
+echo "postdata = $postdata"
 
 # Führe den curl-Befehl aus und fange die Antwort ab.
 # --silent: Unterdrückt Fortschrittsanzeigen und Fehlermeldungen von curl.

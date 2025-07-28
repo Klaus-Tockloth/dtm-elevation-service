@@ -46,7 +46,7 @@ postdataLonLat=$(cat <<EOF
 EOF
 )
 
-echo "postdata =\n$postdataUTM"
+echo "postdata = $postdataUTM"
 
 curl \
 --silent \

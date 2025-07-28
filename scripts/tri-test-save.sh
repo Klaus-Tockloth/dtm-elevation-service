@@ -21,13 +21,14 @@ postdata=$(cat <<EOF
       "5 255 0 0 255",
       "10 139 0 0 255",
       "nv 0 0 0 0"
-    ]
+    ],
+    "ColoringAlgorithm": "interpolation"
   }
 }
 EOF
 )
 
-echo "postdata =\n$postdata"
+echo "postdata = $postdata"
 
 # Führe den curl-Befehl aus und fange die Antwort ab.
 # --silent: Unterdrückt Fortschrittsanzeigen und Fehlermeldungen von curl.
@@ -87,9 +88,9 @@ echo "Verarbeite TRIs aus der Antwort ..."
 # read -r: Liest eine Zeile in Variablen. -r verhindert die Interpretation von Backslash-Escapes.
 # while read -r ...: Liest jede Zeile der jq-Ausgabe in die angegebenen Variablen und führt den Block aus.
 echo "$curl_response" | jq -r '.Attributes.TRIs[] | "\(.Data) \(.TileIndex) \(.Origin)"' | \
-while read -r aspect_data aspect_tile_index aspect_origin; do
+while read -r tri_data tri_tile_index tri_origin; do
   # Überprüfen, ob die extrahierten Variablen nicht leer sind
-  if [ -z "$aspect_data" ] || [ -z "$aspect_tile_index" ] || [ -z "$aspect_origin" ]; then
+  if [ -z "$tri_data" ] || [ -z "$tri_tile_index" ] || [ -z "$tri_origin" ]; then
     echo "Warnung: Konnte Data, TileIndex oder Origin für ein TRI-Objekt nicht extrahieren. Überspringe." >&2
     # Gibt die Zeile aus, die nicht geparst werden konnte (falls nötig für Debugging)
     # echo "Problemzeile: $REPLY" >&2
@@ -97,14 +98,14 @@ while read -r aspect_data aspect_tile_index aspect_origin; do
   fi
 
   # Definiere den Ausgabedateinamen unter Verwendung des extrahierten Kachel-Indexes und Origins.
-  # Format: TileIndex.Origin.aspect.png
-  output_filename="${aspect_tile_index}.${aspect_origin}.aspect.png"
+  # Format: TileIndex.Origin.tri.png
+  output_filename="${tri_tile_index}.${tri_origin}.tri.png"
 
-  echo "Verarbeite TileIndex: $aspect_tile_index, Origin: $aspect_origin"
+  echo "Verarbeite TileIndex: $tri_tile_index, Origin: $tri_origin"
   echo "Speichere Daten in: $output_filename"
 
   # Dekodiere die base64-Daten und speichere sie als Binärdatei (das PNG-Bild).
-  echo "$aspect_data" | base64 -d > "$output_filename"
+  echo "$tri_data" | base64 -d > "$output_filename"
   # Überprüfen, ob der base64 Befehl erfolgreich war
   if [ $? -ne 0 ]; then
       echo "Fehler: base64 Dekodierung fehlgeschlagen für ${output_filename}." >&2

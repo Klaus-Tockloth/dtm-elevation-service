@@ -21,13 +21,14 @@ postdata=$(cat <<EOF
       "5 255 0 0 255",
       "10 139 0 0 255",
       "nv 0 0 0 0"
-    ]
+    ],
+    "ColoringAlgorithm": "interpolation"
   }
 }
 EOF
 )
 
-echo "postdata =\n$postdata"
+echo "postdata = $postdata"
 
 curl \
 --silent \

@@ -14,7 +14,7 @@ postdata=$(cat <<EOF
 EOF
 )
 
-echo "postdata =\n$postdata"
+echo "postdata = $postdata"
 
 curl \
 --silent \

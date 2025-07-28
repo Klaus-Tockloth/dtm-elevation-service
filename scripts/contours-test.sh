@@ -40,7 +40,7 @@ postdataLonLat=$(cat <<EOF
 EOF
 )
 
-echo "postdata =\n$postdataLonLat"
+echo "postdata = $postdataLonLat"
 
 curl \
 --silent \
