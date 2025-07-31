@@ -79,7 +79,7 @@ func buildRepository() error {
 		}
 	}
 
-	slog.Info("global tile repository successfully built", "entries", len(Repository), "primary tiles", numberOfPrimaryTiles,
+	slog.Info("global tile repository successfully build", "entries", len(Repository), "primary tiles", numberOfPrimaryTiles,
 		"secondary tiles", numberOfSecondaryTiles, "tertiary tiles", numberOfTertiaryTiles)
 
 	return nil

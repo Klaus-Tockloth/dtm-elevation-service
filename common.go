@@ -46,8 +46,8 @@ const (
 	TypeTPIResponse        = "TPIResponse"
 	TypeTRIRequest         = "TRIRequest"
 	TypeTRIResponse        = "TRIResponse"
-	TypeRIRequest          = "RIRequest"
-	TypeRIResponse         = "RIResponse"
+	TypeRoughnessRequest   = "RoughnessRequest"
+	TypeRoughnessResponse  = "RoughnessResponse"
 	TypeRawTIFRequest      = "RawTIFRequest"
 	TypeRawTIFResponse     = "RawTIFResponse"
 )
@@ -63,7 +63,7 @@ const (
 	MaxAspectRequestBodySize     = 16 * 1024
 	MaxTPIRequestBodySize        = 16 * 1024
 	MaxTRIRequestBodySize        = 16 * 1024
-	MaxRIRequestBodySize         = 16 * 1024
+	MaxRoughnessRequestBodySize  = 16 * 1024
 	MaxRawTIFRequestBodySize     = 4 * 1024
 )
 
@@ -592,12 +592,12 @@ type TRIResponse struct {
 }
 
 // --------------------------------------------------------------------------------
-// Request  : Client -> RIRequest  -> Service
-// Response : Client <- RIResponse <- Service
+// Request  : Client -> RoughnessRequest  -> Service
+// Response : Client <- RoughnessResponse <- Service
 // --------------------------------------------------------------------------------
 
-// RIRequest represents coordinates and settings for RI request.
-type RIRequest struct {
+// RoughnessRequest represents coordinates and settings for Roughness request.
+type RoughnessRequest struct {
 	Type       string
 	ID         string
 	Attributes struct {
@@ -611,8 +611,8 @@ type RIRequest struct {
 	}
 }
 
-// RI represents compressed RI object (PNG  or GeoRawTIFF) for one tile.
-type RI struct {
+// Roughness represents compressed Roughness object (PNG  or GeoRawTIFF) for one tile.
+type Roughness struct {
 	Data        []byte
 	DataFormat  string
 	Actuality   string
@@ -622,8 +622,8 @@ type RI struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// RIResponse represents slope objects for RI response.
-type RIResponse struct {
+// RoughnessResponse represents slope objects for RI response.
+type RoughnessResponse struct {
 	Type       string
 	ID         string
 	Attributes struct {
@@ -634,7 +634,7 @@ type RIResponse struct {
 		Latitude             float64
 		ColorTextFileContent []string
 		ColoringAlgorithm    string // interpolation, rounding
-		RIs                  []RI
+		Roughnesses          []Roughness
 		IsError              bool
 		Error                ErrorObject
 	}

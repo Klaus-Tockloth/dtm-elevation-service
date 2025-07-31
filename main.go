@@ -13,6 +13,8 @@ Releases:
 - v1.2.1 - 2025-07-23: aspect: gdaldem option -zero_for_flat removed
 - v1.3.0 - 2025-07-26: added: tpi, tri, ri, rawtif; option '-nearest_color_entry' in 'gdaldem color-relief' removed
 - v1.4.0 - 2025-07-28: coloring options added: interpolation, rounding
+- v1.5.0 - 2025-07-28: 'ri' renamed to 'roughness'
+- v1.5.1 - 2025-07-30: 'ri' renamed to 'roughness'
 
 Author:
 - Klaus Tockloth
@@ -64,8 +66,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.4.0"
-	progDate      = "2025-07-28"
+	progVersion   = "v1.5.1"
+	progDate      = "2025-07-30"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
@@ -100,7 +102,7 @@ var (
 	AspectRequests     uint64
 	TPIRequests        uint64
 	TRIRequests        uint64
-	RIRequests         uint64
+	RoughnessRequests  uint64
 	RawTIFRequests     uint64
 )
 
@@ -208,8 +210,8 @@ func main() {
 	http.HandleFunc("POST /v1/tri", triRequest)
 	http.HandleFunc("OPTIONS /v1/tri", corsOptionsHandler)
 
-	http.HandleFunc("POST /v1/ri", riRequest)
-	http.HandleFunc("OPTIONS /v1/ri", corsOptionsHandler)
+	http.HandleFunc("POST /v1/roughness", roughnessRequest)
+	http.HandleFunc("OPTIONS /v1/roughness", corsOptionsHandler)
 
 	http.HandleFunc("POST /v1/rawtif", rawtifRequest)
 	http.HandleFunc("OPTIONS /v1/rawtif", corsOptionsHandler)
@@ -308,7 +310,7 @@ func logStatistics() {
 	currentAspectRequests := atomic.LoadUint64(&AspectRequests)
 	currentTPIRequests := atomic.LoadUint64(&TPIRequests)
 	currentTRIRequests := atomic.LoadUint64(&TRIRequests)
-	currentRIRequests := atomic.LoadUint64(&RIRequests)
+	currentRoughnessRequests := atomic.LoadUint64(&RoughnessRequests)
 	currentRawTIFRequests := atomic.LoadUint64(&RawTIFRequests)
 
 	// reset statistics
@@ -324,7 +326,7 @@ func logStatistics() {
 	atomic.StoreUint64(&AspectRequests, 0)
 	atomic.StoreUint64(&TPIRequests, 0)
 	atomic.StoreUint64(&TRIRequests, 0)
-	atomic.StoreUint64(&RIRequests, 0)
+	atomic.StoreUint64(&RoughnessRequests, 0)
 	atomic.StoreUint64(&RawTIFRequests, 0)
 
 	// log statistics
@@ -341,7 +343,7 @@ func logStatistics() {
 		"AspectRequests", currentAspectRequests,
 		"TPIRequests", currentTPIRequests,
 		"TRIRequests", currentTRIRequests,
-		"RIRequests", currentRIRequests,
+		"RoughnessRequests", currentRoughnessRequests,
 		"RawTIFRequests", currentRawTIFRequests,
 	)
 }
