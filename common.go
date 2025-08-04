@@ -362,7 +362,7 @@ type HillshadeRequest struct {
 	}
 }
 
-// Hillshade represents compressed hillshade object (PNG  or GeoRawTIFF) for one tile.
+// Hillshade represents compressed hillshade object (PNG or GeoTIFF) for one tile.
 type Hillshade struct {
 	Data        []byte
 	DataFormat  string
@@ -415,7 +415,7 @@ type SlopeRequest struct {
 	}
 }
 
-// Slope represents compressed slope object (PNG  or GeoRawTIFF) for one tile.
+// Slope represents compressed slope object (PNG or GeoTIFF) for one tile.
 type Slope struct {
 	Data        []byte
 	DataFormat  string
@@ -466,7 +466,7 @@ type AspectRequest struct {
 	}
 }
 
-// Aspect represents compressed slope object (PNG  or GeoRawTIFF) for one tile.
+// Aspect represents compressed slope object (PNG or GeoTIFF) for one tile.
 type Aspect struct {
 	Data        []byte
 	DataFormat  string
@@ -516,7 +516,7 @@ type TPIRequest struct {
 	}
 }
 
-// TPI represents compressed TPI object (PNG  or GeoRawTIFF) for one tile.
+// TPI represents compressed TPI object (PNG or GeoTIFF) for one tile.
 type TPI struct {
 	Data        []byte
 	DataFormat  string
@@ -565,7 +565,7 @@ type TRIRequest struct {
 	}
 }
 
-// TRI represents compressed TRI object (PNG  or GeoRawTIFF) for one tile.
+// TRI represents compressed TRI object (PNG or GeoTIFF) for one tile.
 type TRI struct {
 	Data        []byte
 	DataFormat  string
@@ -614,7 +614,7 @@ type RoughnessRequest struct {
 	}
 }
 
-// Roughness represents compressed Roughness object (PNG  or GeoRawTIFF) for one tile.
+// Roughness represents compressed Roughness object (PNG or GeoTIFF) for one tile.
 type Roughness struct {
 	Data        []byte
 	DataFormat  string
@@ -716,7 +716,7 @@ type ColorReliefRequest struct {
 	}
 }
 
-// TRI represents compressed TRI object (PNG  or GeoRawTIFF) for one tile.
+// TRI represents compressed TRI object (PNG or GeoTIFF) for one tile.
 type ColorRelief struct {
 	Data        []byte
 	DataFormat  string

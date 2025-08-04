@@ -29,7 +29,7 @@ postdata=$(cat <<EOF
       "2200 169 169 169 255",
       "2400 192 192 192 255",
       "2600 255 255 255 255",
-      "nv 0 0 0 255"
+      "nv 0 0 0 0"
     ],
     "ColoringAlgorithm": "interpolation"
   }
