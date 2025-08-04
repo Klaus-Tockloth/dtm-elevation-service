@@ -26,45 +26,48 @@ const (
 
 // JSON API types
 const (
-	TypePointRequest       = "PointRequest"
-	TypePointResponse      = "PointResponse"
-	TypeUTMPointRequest    = "UTMPointRequest"
-	TypeUTMPointResponse   = "UTMPointResponse"
-	TypeGPXRequest         = "GPXRequest"
-	TypeGPXResponse        = "GPXResponse"
-	TypeGPXAnalyzeRequest  = "GPXAnalyzeRequest"
-	TypeGPXAnalyzeResponse = "GPXAnalyzeResponse"
-	TypeContoursRequest    = "ContoursRequest"
-	TypeContoursResponse   = "ContoursResponse"
-	TypeHillshadeRequest   = "HillshadeRequest"
-	TypeHillshadeResponse  = "HillshadeResponse"
-	TypeSlopeRequest       = "SlopeRequest"
-	TypeSlopeResponse      = "SlopeResponse"
-	TypeAspectRequest      = "AspectRequest"
-	TypeAspectResponse     = "AspectResponse"
-	TypeTPIRequest         = "TPIRequest"
-	TypeTPIResponse        = "TPIResponse"
-	TypeTRIRequest         = "TRIRequest"
-	TypeTRIResponse        = "TRIResponse"
-	TypeRoughnessRequest   = "RoughnessRequest"
-	TypeRoughnessResponse  = "RoughnessResponse"
-	TypeRawTIFRequest      = "RawTIFRequest"
-	TypeRawTIFResponse     = "RawTIFResponse"
+	TypePointRequest        = "PointRequest"
+	TypePointResponse       = "PointResponse"
+	TypeUTMPointRequest     = "UTMPointRequest"
+	TypeUTMPointResponse    = "UTMPointResponse"
+	TypeGPXRequest          = "GPXRequest"
+	TypeGPXResponse         = "GPXResponse"
+	TypeGPXAnalyzeRequest   = "GPXAnalyzeRequest"
+	TypeGPXAnalyzeResponse  = "GPXAnalyzeResponse"
+	TypeContoursRequest     = "ContoursRequest"
+	TypeContoursResponse    = "ContoursResponse"
+	TypeHillshadeRequest    = "HillshadeRequest"
+	TypeHillshadeResponse   = "HillshadeResponse"
+	TypeSlopeRequest        = "SlopeRequest"
+	TypeSlopeResponse       = "SlopeResponse"
+	TypeAspectRequest       = "AspectRequest"
+	TypeAspectResponse      = "AspectResponse"
+	TypeTPIRequest          = "TPIRequest"
+	TypeTPIResponse         = "TPIResponse"
+	TypeTRIRequest          = "TRIRequest"
+	TypeTRIResponse         = "TRIResponse"
+	TypeRoughnessRequest    = "RoughnessRequest"
+	TypeRoughnessResponse   = "RoughnessResponse"
+	TypeRawTIFRequest       = "RawTIFRequest"
+	TypeRawTIFResponse      = "RawTIFResponse"
+	TypeColorReliefRequest  = "ColorReliefRequest"
+	TypeColorReliefResponse = "ColorReliefResponse"
 )
 
 // request body limits (in bytes, for security reasons)
 const (
-	MaxPointRequestBodySize      = 4 * 1024
-	MaxGpxRequestBodySize        = 24 * 1024 * 1024
-	MaxGpxAnalyzeRequestBodySize = 24 * 1024 * 1024
-	MaxContoursRequestBodySize   = 4 * 1024
-	MaxHillshadeRequestBodySize  = 4 * 1024
-	MaxSlopeRequestBodySize      = 16 * 1024
-	MaxAspectRequestBodySize     = 16 * 1024
-	MaxTPIRequestBodySize        = 16 * 1024
-	MaxTRIRequestBodySize        = 16 * 1024
-	MaxRoughnessRequestBodySize  = 16 * 1024
-	MaxRawTIFRequestBodySize     = 4 * 1024
+	MaxPointRequestBodySize       = 4 * 1024
+	MaxGpxRequestBodySize         = 24 * 1024 * 1024
+	MaxGpxAnalyzeRequestBodySize  = 24 * 1024 * 1024
+	MaxContoursRequestBodySize    = 4 * 1024
+	MaxHillshadeRequestBodySize   = 4 * 1024
+	MaxSlopeRequestBodySize       = 16 * 1024
+	MaxAspectRequestBodySize      = 16 * 1024
+	MaxTPIRequestBodySize         = 16 * 1024
+	MaxTRIRequestBodySize         = 16 * 1024
+	MaxRoughnessRequestBodySize   = 16 * 1024
+	MaxRawTIFRequestBodySize      = 4 * 1024
+	MaxColorReliefRequestBodySize = 4 * 1024
 )
 
 // ErrorObject represents error details.
@@ -691,6 +694,55 @@ func FileExists(filename string) bool {
 	}
 	// check if it's actually a file and not a directory
 	return !info.IsDir()
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> ColorReliefRequest  -> Service
+// Response : Client <- ColorReliefResponse <- Service
+// --------------------------------------------------------------------------------
+
+// ColorReliefRequest represents coordinates and settings for ColorRelief request.
+type ColorReliefRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
+	}
+}
+
+// TRI represents compressed TRI object (PNG  or GeoRawTIFF) for one tile.
+type ColorRelief struct {
+	Data        []byte
+	DataFormat  string
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+	BoundingBox WGS84BoundingBox
+}
+
+// ColorReliefResponse represents ColorRelief objects for ColorRelief response.
+type ColorReliefResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                 int
+		Easting              float64
+		Northing             float64
+		Longitude            float64
+		Latitude             float64
+		ColorTextFileContent []string
+		ColoringAlgorithm    string // interpolation, rounding
+		ColorReliefs         []ColorRelief
+		IsError              bool
+		Error                ErrorObject
+	}
 }
 
 /*

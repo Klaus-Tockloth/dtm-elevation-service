@@ -15,6 +15,7 @@ Releases:
 - v1.4.0 - 2025-07-28: coloring options added: interpolation, rounding
 - v1.5.0 - 2025-07-28: 'ri' renamed to 'roughness'
 - v1.5.1 - 2025-07-30: 'ri' renamed to 'roughness'
+- v1.6.0 - 2025-08-04: added: colorrelief
 
 Author:
 - Klaus Tockloth
@@ -66,8 +67,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.5.1"
-	progDate      = "2025-07-30"
+	progVersion   = "v1.6.0"
+	progDate      = "2025-08-04"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
@@ -90,20 +91,21 @@ var progConfig ProgConfig
 
 // statistics
 var (
-	PointRequests      uint64
-	UTMPointRequests   uint64
-	GPXRequests        uint64
-	GPXAnalyzeRequests uint64
-	GPXPoints          uint64
-	DGMPoints          uint64
-	ContoursRequests   uint64
-	HillshadeRequests  uint64
-	SlopeRequests      uint64
-	AspectRequests     uint64
-	TPIRequests        uint64
-	TRIRequests        uint64
-	RoughnessRequests  uint64
-	RawTIFRequests     uint64
+	PointRequests       uint64
+	UTMPointRequests    uint64
+	GPXRequests         uint64
+	GPXAnalyzeRequests  uint64
+	GPXPoints           uint64
+	DGMPoints           uint64
+	ContoursRequests    uint64
+	HillshadeRequests   uint64
+	SlopeRequests       uint64
+	AspectRequests      uint64
+	TPIRequests         uint64
+	TRIRequests         uint64
+	RoughnessRequests   uint64
+	RawTIFRequests      uint64
+	ColorReliefRequests uint64
 )
 
 /*
@@ -216,6 +218,9 @@ func main() {
 	http.HandleFunc("POST /v1/rawtif", rawtifRequest)
 	http.HandleFunc("OPTIONS /v1/rawtif", corsOptionsHandler)
 
+	http.HandleFunc("POST /v1/colorrelief", colorReliefRequest)
+	http.HandleFunc("OPTIONS /v1/colorrelief", corsOptionsHandler)
+
 	// handle unsupported routes or methods
 	http.HandleFunc("/", unsupportedRequest)
 
@@ -312,6 +317,7 @@ func logStatistics() {
 	currentTRIRequests := atomic.LoadUint64(&TRIRequests)
 	currentRoughnessRequests := atomic.LoadUint64(&RoughnessRequests)
 	currentRawTIFRequests := atomic.LoadUint64(&RawTIFRequests)
+	currentColorReliefRequests := atomic.LoadUint64(&ColorReliefRequests)
 
 	// reset statistics
 	atomic.StoreUint64(&PointRequests, 0)
@@ -328,6 +334,7 @@ func logStatistics() {
 	atomic.StoreUint64(&TRIRequests, 0)
 	atomic.StoreUint64(&RoughnessRequests, 0)
 	atomic.StoreUint64(&RawTIFRequests, 0)
+	atomic.StoreUint64(&ColorReliefRequests, 0)
 
 	// log statistics
 	slog.Info("load statistics",
@@ -345,6 +352,7 @@ func logStatistics() {
 		"TRIRequests", currentTRIRequests,
 		"RoughnessRequests", currentRoughnessRequests,
 		"RawTIFRequests", currentRawTIFRequests,
+		"ColorReliefRequests", currentColorReliefRequests,
 	)
 }
 
