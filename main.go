@@ -16,6 +16,7 @@ Releases:
 - v1.5.0 - 2025-07-28: 'ri' renamed to 'roughness'
 - v1.5.1 - 2025-07-30: 'ri' renamed to 'roughness'
 - v1.6.0 - 2025-08-04: added: colorrelief
+- v1.6.1 - 2025-08-06: tri algorithm: Riley instead of Wilson
 
 Author:
 - Klaus Tockloth
@@ -67,8 +68,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.6.0"
-	progDate      = "2025-08-04"
+	progVersion   = "v1.6.1"
+	progDate      = "2025-08-06"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"

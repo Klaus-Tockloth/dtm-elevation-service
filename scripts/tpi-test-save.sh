@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Abfrage TRI für eine Kachel mit 1000x1000 Meter. 
+# Abfrage TPI für eine Kachel mit 1000x1000 Meter. 
 
 postdata=$(cat <<EOF
 {
-  "Type": "TRIRequest",
+  "Type": "TPIRequest",
   "ID": "Hegekopf, Edersee, Hessen",
   "Attributes": {
     "Zone": 0,
@@ -12,35 +12,14 @@ postdata=$(cat <<EOF
     "Northing": 0.0,
     "Longitude": 8.964229,
     "Latitude": 51.185913,
-   "ColorTextFileContent": [
-      "# Farbdefinition für TRI",
+    "ColorTextFileContent": [
+      "# Farbdefinition für TPI - Topographic Ruggedness Index",
       "# Format: Wert Rot Grün Blau Alpha",
-      "0.00 173 216 230 255",
-      "0.20 57 176 130 255",
-      "0.40 104 151 0 255",
-      "0.60 255 195 0 255",
-      "0.80 255 186 0 255",
-      "1.00 255 177 0 255",
-      "1.20 255 167 0 255",
-      "1.40 255 132 0 255",
-      "1.60 255 88 0 255",
-      "1.80 255 44 0 255",
-      "2.00 255 0 0 255",
-      "2.20 245 0 0 255",
-      "2.40 235 0 0 255",
-      "2.60 225 0 0 255",
-      "2.80 215 0 0 255",
-      "3.00 205 0 0 255",
-      "3.20 195 0 0 255",
-      "3.40 185 0 0 255",
-      "3.60 168 0 0 255",
-      "3.80 144 0 0 255",
-      "4.00 120 0 0 255",
-      "4.20 96 0 0 255",
-      "4.40 72 0 0 255",
-      "4.60 48 0 0 255",
-      "4.80 24 0 0 255",
-      "5.00 0 0 0 255",
+      "0 154 205 50 255",
+      "0.5 50 150 50 255",
+      "2 255 165 0 255",
+      "5 255 0 0 255",
+      "10 139 0 0 255",
       "nv 0 0 0 0"
     ],
     "ColoringAlgorithm": "interpolation"
@@ -64,7 +43,7 @@ curl_response=$(curl \
 --header "Accept: application/json" \
 --header "Accept-Encoding: gzip" \
 --data "$postdata" \
-https://api.hoehendaten.de:14444/v1/tri)
+https://api.hoehendaten.de:14444/v1/tpi)
 
 # Überprüfen, ob curl eine leere Antwort zurückgegeben hat.
 if [ -z "$curl_response" ]; then
@@ -74,14 +53,14 @@ fi
 
 # --- Print truncated JSON response ---
 echo "Vollständige JSON-Antwort (Data-Felder gekürzt):"
-# Kürze das Data-Feld für jedes Element im TRIs-Array
-echo "$curl_response" | jq '(.Attributes.TRIs[]?.Data |= (.[:48] + " ..."))'
+# Kürze das Data-Feld für jedes Element im TPIs-Array
+echo "$curl_response" | jq '(.Attributes.TPIs[]?.Data |= (.[:48] + " ..."))'
 echo "---------------------------------------------"
 # --- End print truncated JSON response ---
 
-# Überprüfen, ob das Attributes.TRIs Array existiert und nicht leer ist
-if ! echo "$curl_response" | jq -e '.Attributes.TRIs | arrays and length > 0' > /dev/null; then
-    echo "Fehler: JSON-Antwort enthält kein nicht-leeres 'Attributes.TRIs' Array." >&2
+# Überprüfen, ob das Attributes.TPIs Array existiert und nicht leer ist
+if ! echo "$curl_response" | jq -e '.Attributes.TPIs | arrays and length > 0' > /dev/null; then
+    echo "Fehler: JSON-Antwort enthält kein nicht-leeres 'Attributes.TPIs' Array." >&2
     # Versucht, API-Fehlerdetails zu extrahieren und auszugeben, falls vorhanden
     api_error_code=$(echo "$curl_response" | jq -r '.Attributes.Error.Code // empty')
     api_error_detail=$(echo "$curl_response" | jq -r '.Attributes.Error.Detail // empty')
@@ -97,36 +76,35 @@ if ! echo "$curl_response" | jq -e '.Attributes.TRIs | arrays and length > 0' > 
     exit 1
 fi
 
-echo "Verarbeite TRIs aus der Antwort ..."
+echo "Verarbeite TPIs aus der Antwort ..."
 
 # Parse die JSON-Antwort mit jq, um die base64-Daten, den Kachel-Index und den Origin für jedes Objekt zu extrahieren.
-# .Attributes.TRIs[]: Iteriert über jedes Element des TRIs-Arrays.
+# .Attributes.TPIs[]: Iteriert über jedes Element des TPIs-Arrays.
 # |: Leitet das Ergebnis an den nächsten jq-Ausdruck weiter.
-# "\(.Data) \(.TileIndex) \(.Origin)": Erstellt eine einzelne Zeichenkette pro TRI,
+# "\(.Data) \(.TileIndex) \(.Origin)": Erstellt eine einzelne Zeichenkette pro TPI,
 # die Data, TileIndex und Origin enthält, getrennt durch Leerzeichen.
 # jq -r: Gibt rohe Zeichenketten ohne JSON-Anführungszeichen aus.
 # <(...) : Prozess-Substitution, führt den Befehl aus und stellt seine Ausgabe als Datei bereit, aus der read liest.
 # read -r: Liest eine Zeile in Variablen. -r verhindert die Interpretation von Backslash-Escapes.
 # while read -r ...: Liest jede Zeile der jq-Ausgabe in die angegebenen Variablen und führt den Block aus.
-echo "$curl_response" | jq -r '.Attributes.TRIs[] | "\(.Data) \(.TileIndex) \(.Origin)"' | \
-while read -r tri_data tri_tile_index tri_origin; do
+echo "$curl_response" | jq -r '.Attributes.TPIs[] | "\(.Data) \(.TileIndex) \(.Origin)"' | \
+while read -r tpi_data tpi_tile_index tpi_origin; do
   # Überprüfen, ob die extrahierten Variablen nicht leer sind
-  if [ -z "$tri_data" ] || [ -z "$tri_tile_index" ] || [ -z "$tri_origin" ]; then
-    echo "Warnung: Konnte Data, TileIndex oder Origin für ein TRI-Objekt nicht extrahieren. Überspringe." >&2
+  if [ -z "$tpi_data" ] || [ -z "$tpi_tile_index" ] || [ -z "$tpi_origin" ]; then
+    echo "Warnung: Konnte Data, TileIndex oder Origin für ein TPI-Objekt nicht extrahieren. Überspringe." >&2
     # Gibt die Zeile aus, die nicht geparst werden konnte (falls nötig für Debugging)
     # echo "Problemzeile: $REPLY" >&2
     continue # Springt zum nächsten Element im while-Loop
   fi
 
   # Definiere den Ausgabedateinamen unter Verwendung des extrahierten Kachel-Indexes und Origins.
-  # Format: TileIndex.Origin.tri.png
-  output_filename="${tri_tile_index}.${tri_origin}.tri.png"
+  output_filename="${tpi_tile_index}.${tpi_origin}.tpi.png"
 
-  echo "Verarbeite TileIndex: $tri_tile_index, Origin: $tri_origin"
+  echo "Verarbeite TileIndex: $tpi_tile_index, Origin: $tpi_origin"
   echo "Speichere Daten in: $output_filename"
 
   # Dekodiere die base64-Daten und speichere sie als Binärdatei (das PNG-Bild).
-  echo "$tri_data" | base64 -d > "$output_filename"
+  echo "$tpi_data" | base64 -d > "$output_filename"
   # Überprüfen, ob der base64 Befehl erfolgreich war
   if [ $? -ne 0 ]; then
       echo "Fehler: base64 Dekodierung fehlgeschlagen für ${output_filename}." >&2
@@ -142,12 +120,12 @@ done
 # Überprüfen, ob der jq-Befehl, der die Daten für den Loop extrahiert hat, fehlgeschlagen ist.
 # $? enthält den Exit-Status des zuletzt ausgeführten Befehls vor der Pipe, hier 'jq'.
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
-  echo "Fehler beim Ausführen von jq zum Extrahieren der TRI-Daten. Überprüfen Sie die jq-Syntax und die JSON-Struktur." >&2
+  echo "Fehler beim Ausführen von jq zum Extrahieren der TPI-Daten. Überprüfen Sie die jq-Syntax und die JSON-Struktur." >&2
   # Der vollständige Antwort-Body wurde bereits oben ausgegeben, falls nötig.
   exit 1
 fi
 
-echo "Alle verfügbaren TRIs verarbeitet."
+echo "Alle verfügbaren TPIs verarbeitet."
 
 # Exit mit Erfolg-Status
 exit 0

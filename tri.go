@@ -345,8 +345,8 @@ func generateTRIObjectForTile(tile TileMetadata, outputFormat string, colorTextF
 	triColorWebmercatoPNG := filepath.Join(tempDir, tile.Index+".tri.color.webmercator.png")
 
 	// 1. create native TRI with 'gdaldem TRI'
-	// e.g. gdaldem TRI 602_5251.tif 602_5251_tri.utm.tif -alg Wilson -compute_edges
-	commandExitStatus, commandOutput, err := runCommand("gdaldem", []string{"TRI", inputGeoTIFF, triUTMGeoTIFF, "-alg", "Wilson", "-compute_edges"})
+	// e.g. gdaldem TRI 602_5251.tif 602_5251_tri.utm.tif -alg Riley -compute_edges
+	commandExitStatus, commandOutput, err := runCommand("gdaldem", []string{"TRI", inputGeoTIFF, triUTMGeoTIFF, "-alg", "Riley", "-compute_edges"})
 	if err != nil {
 		return tri, fmt.Errorf("error [%w: %d - %s] at runCommand()", err, commandExitStatus, commandOutput)
 	}
