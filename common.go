@@ -52,6 +52,8 @@ const (
 	TypeRawTIFResponse      = "RawTIFResponse"
 	TypeColorReliefRequest  = "ColorReliefRequest"
 	TypeColorReliefResponse = "ColorReliefResponse"
+	TypeHistogramRequest    = "HistogramRequest"
+	TypeHistogramResponse   = "HistogramResponse"
 )
 
 // request body limits (in bytes, for security reasons)
@@ -68,6 +70,7 @@ const (
 	MaxRoughnessRequestBodySize   = 16 * 1024
 	MaxRawTIFRequestBodySize      = 4 * 1024
 	MaxColorReliefRequestBodySize = 4 * 1024
+	MaxHistogramRequestBodySize   = 4 * 1024
 )
 
 // ErrorObject represents error details.
@@ -312,7 +315,7 @@ type ContoursRequest struct {
 	}
 }
 
-// Contour represents compressed contours lines for one tile.
+// Contour represents contours lines for one tile.
 type Contour struct {
 	Data        []byte
 	DataFormat  string
@@ -322,7 +325,7 @@ type Contour struct {
 	TileIndex   string
 }
 
-// ContoursResponse represents contours objects for contours response.
+// ContoursResponse represents Contours objects for compressed contours response.
 type ContoursResponse struct {
 	Type       string
 	ID         string
@@ -362,7 +365,7 @@ type HillshadeRequest struct {
 	}
 }
 
-// Hillshade represents compressed hillshade object (PNG or GeoTIFF) for one tile.
+// Hillshade represents hillshade object (PNG or GeoTIFF) for one tile.
 type Hillshade struct {
 	Data        []byte
 	DataFormat  string
@@ -373,7 +376,7 @@ type Hillshade struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// HillshadeResponse represents hillshade objects for hillshade response.
+// HillshadeResponse represents Hillshade objects for compressed hillshade response.
 type HillshadeResponse struct {
 	Type       string
 	ID         string
@@ -415,7 +418,7 @@ type SlopeRequest struct {
 	}
 }
 
-// Slope represents compressed slope object (PNG or GeoTIFF) for one tile.
+// Slope represents slope object (PNG or GeoTIFF) for one tile.
 type Slope struct {
 	Data        []byte
 	DataFormat  string
@@ -426,7 +429,7 @@ type Slope struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// SlopeResponse represents slope objects for slope response.
+// SlopeResponse represents Slope objects for compressed slope response.
 type SlopeResponse struct {
 	Type       string
 	ID         string
@@ -466,7 +469,7 @@ type AspectRequest struct {
 	}
 }
 
-// Aspect represents compressed slope object (PNG or GeoTIFF) for one tile.
+// Aspect represents Aspect object (PNG or GeoTIFF) for one tile.
 type Aspect struct {
 	Data        []byte
 	DataFormat  string
@@ -477,7 +480,7 @@ type Aspect struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// AspectResponse represents slope objects for aspect response.
+// AspectResponse represents Aspect objects for compressed aspect response.
 type AspectResponse struct {
 	Type       string
 	ID         string
@@ -516,7 +519,7 @@ type TPIRequest struct {
 	}
 }
 
-// TPI represents compressed TPI object (PNG or GeoTIFF) for one tile.
+// TPI represents TPI object (PNG or GeoTIFF) for one tile.
 type TPI struct {
 	Data        []byte
 	DataFormat  string
@@ -527,7 +530,7 @@ type TPI struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// TPIResponse represents TPI objects for aspect response.
+// TPIResponse represents TPI objects for compressed TPI response.
 type TPIResponse struct {
 	Type       string
 	ID         string
@@ -565,7 +568,7 @@ type TRIRequest struct {
 	}
 }
 
-// TRI represents compressed TRI object (PNG or GeoTIFF) for one tile.
+// TRI represents TRI object (PNG or GeoTIFF) for one tile.
 type TRI struct {
 	Data        []byte
 	DataFormat  string
@@ -576,7 +579,7 @@ type TRI struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// TRIResponse represents TRI objects for aspect response.
+// TRIResponse represents TRI objects for compressed TRI response.
 type TRIResponse struct {
 	Type       string
 	ID         string
@@ -614,7 +617,7 @@ type RoughnessRequest struct {
 	}
 }
 
-// Roughness represents compressed Roughness object (PNG or GeoTIFF) for one tile.
+// Roughness represents Roughness object (PNG or GeoTIFF) for one tile.
 type Roughness struct {
 	Data        []byte
 	DataFormat  string
@@ -625,7 +628,7 @@ type Roughness struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// RoughnessResponse represents slope objects for RI response.
+// RoughnessResponse represents Roughness objects for compressed RI response.
 type RoughnessResponse struct {
 	Type       string
 	ID         string
@@ -683,19 +686,6 @@ type RawTIFResponse struct {
 	}
 }
 
-/*
-FileExists checks if a file already exists.
-It returns true if the file exists, and false otherwise.
-*/
-func FileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	// check if it's actually a file and not a directory
-	return !info.IsDir()
-}
-
 // --------------------------------------------------------------------------------
 // Request  : Client -> ColorReliefRequest  -> Service
 // Response : Client <- ColorReliefResponse <- Service
@@ -716,7 +706,7 @@ type ColorReliefRequest struct {
 	}
 }
 
-// TRI represents compressed TRI object (PNG or GeoTIFF) for one tile.
+// ColorRelief represents ColorRelief object (PNG or GeoTIFF) for one tile.
 type ColorRelief struct {
 	Data        []byte
 	DataFormat  string
@@ -727,7 +717,7 @@ type ColorRelief struct {
 	BoundingBox WGS84BoundingBox
 }
 
-// ColorReliefResponse represents ColorRelief objects for ColorRelief response.
+// ColorReliefResponse represents ColorRelief objects for compressed ColorRelief response.
 type ColorReliefResponse struct {
 	Type       string
 	ID         string
@@ -743,6 +733,94 @@ type ColorReliefResponse struct {
 		IsError              bool
 		Error                ErrorObject
 	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> HistogramRequest  -> Service
+// Response : Client <- HistogramResponse <- Service
+// --------------------------------------------------------------------------------
+
+// HistogramRequest represents coordinates and settings for Histogram request.
+type HistogramRequest struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                int
+		Easting             float64
+		Northing            float64
+		Longitude           float64
+		Latitude            float64
+		TypeOfVisualization string // rawtif, slope, aspect, roughness, tri, tpi
+		GradientAlgorithm   string // Horn, ZevenbergenThorne (only relevant for slope and aspect)
+		TypeOfHistogram     string // standard, quantile
+		NumberOfBins        int
+		MinValue            string
+		MaxValue            string
+	}
+}
+
+// Histogram represents Histogram data object for one tile.
+type HistogramEntry struct {
+	LowerBound float64
+	UpperBound float64
+	BinCount   int
+	BinPercent float64
+}
+type HistogramStatistic struct {
+	NoValueCount             int
+	NoValuePercent           float64
+	BelowHistogramMinCount   int
+	BelowHistogramMinPercent float64
+	AboveHistogramMaxCount   int
+	AboveHistogramMaxPercent float64
+	ValuesTotal              int
+	MinValueAbsolute         float64
+	MaxValueAbsolute         float64
+	MinValueHistogram        float64
+	MaxValueHistogram        float64
+}
+type Histogram struct {
+	Statistic   HistogramStatistic
+	Entries     []HistogramEntry
+	Actuality   string
+	Origin      string
+	Attribution string
+	TileIndex   string
+}
+
+// HistogramResponse represents Histogram objects for Histogram response.
+type HistogramResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		Zone                int
+		Easting             float64
+		Northing            float64
+		Longitude           float64
+		Latitude            float64
+		TypeOfVisualization string
+		GradientAlgorithm   string
+		TypeOfHistogram     string
+		NumberOfBins        int
+		MinValue            string
+		MaxValue            string
+		Histograms          []Histogram
+		IsError             bool
+		Error               ErrorObject
+	}
+}
+
+/*
+FileExists checks if a file already exists.
+It returns true if the file exists, and false otherwise.
+*/
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	// check if it's actually a file and not a directory
+	return !info.IsDir()
 }
 
 /*

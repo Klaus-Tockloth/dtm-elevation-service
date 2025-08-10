@@ -17,6 +17,7 @@ Releases:
 - v1.5.1 - 2025-07-30: 'ri' renamed to 'roughness'
 - v1.6.0 - 2025-08-04: added: colorrelief
 - v1.6.1 - 2025-08-06: tri algorithm: Riley instead of Wilson
+- v1.7.0 - 2025-08-09: added: histogram, libs updated, compiled with go1.24.6
 
 Author:
 - Klaus Tockloth
@@ -68,8 +69,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.6.1"
-	progDate      = "2025-08-06"
+	progVersion   = "v1.7.0"
+	progDate      = "2025-08-09"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
@@ -107,6 +108,7 @@ var (
 	RoughnessRequests   uint64
 	RawTIFRequests      uint64
 	ColorReliefRequests uint64
+	HistogramRequests   uint64
 )
 
 /*
@@ -222,6 +224,9 @@ func main() {
 	http.HandleFunc("POST /v1/colorrelief", colorReliefRequest)
 	http.HandleFunc("OPTIONS /v1/colorrelief", corsOptionsHandler)
 
+	http.HandleFunc("POST /v1/histogram", histogramRequest)
+	http.HandleFunc("OPTIONS /v1/histogram", corsOptionsHandler)
+
 	// handle unsupported routes or methods
 	http.HandleFunc("/", unsupportedRequest)
 
@@ -319,6 +324,7 @@ func logStatistics() {
 	currentRoughnessRequests := atomic.LoadUint64(&RoughnessRequests)
 	currentRawTIFRequests := atomic.LoadUint64(&RawTIFRequests)
 	currentColorReliefRequests := atomic.LoadUint64(&ColorReliefRequests)
+	currentHistogramRequests := atomic.LoadUint64(&HistogramRequests)
 
 	// reset statistics
 	atomic.StoreUint64(&PointRequests, 0)
@@ -336,6 +342,7 @@ func logStatistics() {
 	atomic.StoreUint64(&RoughnessRequests, 0)
 	atomic.StoreUint64(&RawTIFRequests, 0)
 	atomic.StoreUint64(&ColorReliefRequests, 0)
+	atomic.StoreUint64(&HistogramRequests, 0)
 
 	// log statistics
 	slog.Info("load statistics",
@@ -354,6 +361,7 @@ func logStatistics() {
 		"RoughnessRequests", currentRoughnessRequests,
 		"RawTIFRequests", currentRawTIFRequests,
 		"ColorReliefRequests", currentColorReliefRequests,
+		"HistogramRequests", currentHistogramRequests,
 	)
 }
 
