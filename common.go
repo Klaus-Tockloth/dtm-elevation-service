@@ -1199,3 +1199,106 @@ func createColorTextFile(filename string, filecontent []string) error {
 	}
 	return nil
 }
+
+/*
+getAllTilesUTM get metadata for all tiles specified by UTM coordinate.
+It collects associated tiles within the same UTM zone.
+*/
+func getAllTilesUTM(zone int, easting float64, northing float64) ([]TileMetadata, error) {
+	var tiles []TileMetadata
+
+	// get tile metadata for primary tile (e.g. "32_507_5491")
+	tile, err := getGeotiffTile(easting, northing, zone, 1)
+	if err != nil {
+		return nil, fmt.Errorf("getting GeoTIFF tile for UTM coordinates: %w", err)
+	}
+	tiles = append(tiles, tile)
+
+	/*
+	  Case 1:
+	  The tile is provided by one or two additional federal states.
+	  The federal states are located in the same UTM zone.
+	*/
+
+	// get tile metadata for secondary tile (e.g. "32_507_5491_2")
+	tile, err = getGeotiffTile(easting, northing, zone, 2)
+	if err == nil {
+		tiles = append(tiles, tile)
+
+		// get tile metadata for tertiary tile (e.g. "32_507_5491_3")
+		tile, err = getGeotiffTile(easting, northing, zone, 3)
+		if err == nil {
+			tiles = append(tiles, tile)
+		}
+	}
+
+	/* Case 2:
+	   The tile is provided by one or two additional federal states.
+	   The federal states are located in different UTM zones.
+	   Not logical / supported for UTM tile request.
+	*/
+
+	return tiles, nil
+}
+
+/*
+getAllTilesLonLat get metadata for all tiles specified by longitude and latitude.
+It converts them to UTM to gather primary and supplementary tiles, and additionally
+supports fetching tiles from adjacent UTM zones if relevant.
+*/
+func getAllTilesLonLat(longitude float64, latitude float64) ([]TileMetadata, error) {
+	var tiles []TileMetadata
+
+	// get tile metadata for primary tile (e.g. "32_507_5491")
+	tile, zone, easting, northing, err := getTileUTM(longitude, latitude)
+	if err != nil {
+		return nil, fmt.Errorf("getting GeoTIFF tile for lon/lat coordinates: %w", err)
+	}
+	tiles = append(tiles, tile)
+
+	/*
+	  Case 1:
+	  The tile is provided by one or two additional federal states.
+	  The federal states are located in the same UTM zone.
+	*/
+
+	// get tile metadata for secondary tile (e.g. "32_507_5491_2")
+	tile, err = getGeotiffTile(easting, northing, zone, 2)
+	if err == nil {
+		tiles = append(tiles, tile)
+
+		// get tile metadata for tertiary tile (e.g. "32_507_5491_3")
+		tile, err = getGeotiffTile(easting, northing, zone, 3)
+		if err == nil {
+			tiles = append(tiles, tile)
+		}
+	}
+
+	/*
+	  Case 2:
+	  The tile is provided by one or two additional federal states.
+	  The federal states are located in different UTM zones.
+	*/
+
+	neighborZone := 0
+	if zone == 32 {
+		neighborZone = 33
+	} else { // zone == 33
+		neighborZone = 32
+	}
+	targetEPSG := 32600 + neighborZone
+	easting, northing, err = transformLonLatToUTM(longitude, latitude, targetEPSG)
+	if err == nil {
+		tile, err = getGeotiffTile(easting, northing, neighborZone, 1)
+		if err == nil {
+			tiles = append(tiles, tile)
+
+			tile, err = getGeotiffTile(easting, northing, neighborZone, 2)
+			if err == nil {
+				tiles = append(tiles, tile)
+			}
+		}
+	}
+
+	return tiles, nil
+}

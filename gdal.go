@@ -10,27 +10,27 @@ import (
 /*
 transformLonLatToUTM transforms lon/lat coordinates (WGS84, EPSG:4326) to the given UTM zone.
 */
-func transformLonLatToUTM(lon, lat float64, targetEPSG int) (x, y float64, err error) {
+func transformLonLatToUTM(lon, lat float64, targetEPSG int) (float64, float64, error) {
+	var x float64
+	var y float64
+
 	// define source: WGS84 (EPSG:4326)
 	sourceSRS, err := godal.NewSpatialRefFromEPSG(4326)
 	if err != nil {
-		err = fmt.Errorf("error creating source SRS (EPSG:4326): %w", err)
-		return
+		return x, y, fmt.Errorf("error creating source SRS (EPSG:4326): %w", err)
 	}
 	defer sourceSRS.Close()
 
 	// define target: dynamically calculated UTM Zone (e.g. 32632 for Zone 32N)
 	targetSRS, err := godal.NewSpatialRefFromEPSG(targetEPSG)
 	if err != nil {
-		err = fmt.Errorf("error creating target SRS (EPSG:%d): %w", targetEPSG, err)
-		return
+		return x, y, fmt.Errorf("error creating target SRS (EPSG:%d): %w", targetEPSG, err)
 	}
 	defer targetSRS.Close()
 
 	transform, err := godal.NewTransform(sourceSRS, targetSRS)
 	if err != nil {
-		err = fmt.Errorf("error creating coordinate transformation from EPSG:4326 to EPSG:%d: %w", targetEPSG, err)
-		return
+		return x, y, fmt.Errorf("error creating coordinate transformation from EPSG:4326 to EPSG:%d: %w", targetEPSG, err)
 	}
 	defer transform.Close()
 
@@ -44,22 +44,78 @@ func transformLonLatToUTM(lon, lat float64, targetEPSG int) (x, y float64, err e
 	// perform transformation
 	err = transform.TransformEx(xCoords, yCoords, zCoords, successFlags)
 	if err != nil {
-		err = fmt.Errorf("error during coordinate transformation: %w", err)
-		return
+		return x, y, fmt.Errorf("error during coordinate transformation: %w", err)
 	}
 
 	// check success
 	if !successFlags[0] {
-		err = fmt.Errorf("transformation from EPSG:4326 to EPSG:%d failed for coordinates (%.8f, %.8f)", targetEPSG, lon, lat)
-		return
+		return x, y, fmt.Errorf("transformation from EPSG:4326 to EPSG:%d failed for coordinates (%.8f, %.8f)", targetEPSG, lon, lat)
 	}
 
 	// assign results to return variables
 	x = xCoords[0]
 	y = yCoords[0]
 
-	return // return named results (x, y, err)
+	return x, y, nil
 }
+
+/*
+transformUTMToLonLat transforms UTM coordinates into Lon/Lat coordinates (WGS84, EPSG:4326).
+*/
+/*
+func transformUTMToLonLat(easting, northing float64, zone int) (float64, float64, error) {
+	var longitude float64
+	var latitude float64
+
+	// EPSG code for the given UTM zone
+	sourceEPSG := 32600 + zone
+
+	// define the source coordinate system (UTM)
+	sourceSRS, err := godal.NewSpatialRefFromEPSG(sourceEPSG)
+	if err != nil {
+		return longitude, latitude, fmt.Errorf("error creating the source SRS (EPSG:%d): %w", sourceEPSG, err)
+	}
+	defer sourceSRS.Close()
+
+	// define the target coordinate system: WGS84 (EPSG:4326)
+	targetSRS, err := godal.NewSpatialRefFromEPSG(4326)
+	if err != nil {
+		return longitude, latitude, fmt.Errorf("error creating the target SRS (EPSG:4326): %w", err)
+	}
+	defer targetSRS.Close()
+
+	// create the transformation
+	transform, err := godal.NewTransform(sourceSRS, targetSRS)
+	if err != nil {
+		return longitude, latitude, fmt.Errorf("error creating the coordinate transformation from EPSG:%d to EPSG:4326: %w", sourceEPSG, err)
+	}
+	defer transform.Close()
+
+	// define the coordinates to be transformed
+	xCoords := []float64{easting}
+	yCoords := []float64{northing}
+	zCoords := []float64{}
+	numPoints := len(xCoords)
+	successFlags := make([]bool, numPoints)
+
+	// execute the transformation
+	err = transform.TransformEx(xCoords, yCoords, zCoords, successFlags)
+	if err != nil {
+		return longitude, latitude, fmt.Errorf("error during the coordinate transformation: %w", err)
+	}
+
+	// eheck the success of the transformation
+	if !successFlags[0] {
+		return longitude, latitude, fmt.Errorf("transformation from EPSG:%d to EPSG:4326 for the coordinates (%.3f, %.3f) failed", sourceEPSG, easting, northing)
+	}
+
+	// assign the results to the return variables
+	longitude = xCoords[0]
+	latitude = yCoords[0]
+
+	return longitude, latitude, nil
+}
+*/
 
 /*
 getElevationFromUTM retrieves the elevation value from a GeoTIFF DGM file for a given UTM coordinate.

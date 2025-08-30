@@ -85,7 +85,6 @@ func histogramRequest(writer http.ResponseWriter, request *http.Request) {
 	northing := 0.0
 	longitude := 0.0
 	latitude := 0.0
-	var tile TileMetadata
 	var tiles []TileMetadata
 
 	// determine type of coordinates
@@ -95,8 +94,8 @@ func histogramRequest(writer http.ResponseWriter, request *http.Request) {
 		easting = histogramRequest.Attributes.Easting
 		northing = histogramRequest.Attributes.Northing
 
-		// get tile metadata for primary tile (e.g. "32_507_5491")
-		tile, err = getGeotiffTile(easting, northing, zone, 1)
+		// get all tiles (metadata) for given UTM coordinates
+		tiles, err = getAllTilesUTM(zone, easting, northing)
 		if err != nil {
 			slog.Warn("histogram request: error getting GeoTIFF tile for UTM coordinates", "error", err,
 				"easting", easting, "northing", northing, "zone", zone, "ID", histogramRequest.ID)
@@ -106,26 +105,13 @@ func histogramRequest(writer http.ResponseWriter, request *http.Request) {
 			buildHistogramResponse(writer, http.StatusBadRequest, histogramResponse)
 			return
 		}
-		tiles = append(tiles, tile)
-
-		// get tile metadata for secondary tile (e.g. "32_507_5491_2")
-		tile, err = getGeotiffTile(easting, northing, zone, 2)
-		if err == nil {
-			tiles = append(tiles, tile)
-
-			// get tile metadata for tertiary tile (e.g. "32_507_5491_3")
-			tile, err = getGeotiffTile(easting, northing, zone, 3)
-			if err == nil {
-				tiles = append(tiles, tile)
-			}
-		}
 	} else {
 		// input from lon/lat coordinates
 		longitude = histogramRequest.Attributes.Longitude
 		latitude = histogramRequest.Attributes.Latitude
 
-		// get tile metadata for primary tile (e.g. "32_507_5491")
-		tile, zone, easting, northing, err = getTileUTM(longitude, latitude)
+		// get all tiles (metadata) for given lon/lat coordinates
+		tiles, err = getAllTilesLonLat(longitude, latitude)
 		if err != nil {
 			err = fmt.Errorf("error [%w] getting tile for coordinates lon: %.8f, lat: %.8f", err, longitude, latitude)
 			slog.Warn("histogram request: error getting GeoTIFF tile for lon/lat coordinates", "error", err,
@@ -135,19 +121,6 @@ func histogramRequest(writer http.ResponseWriter, request *http.Request) {
 			histogramResponse.Attributes.Error.Detail = err.Error()
 			buildHistogramResponse(writer, http.StatusBadRequest, histogramResponse)
 			return
-		}
-		tiles = append(tiles, tile)
-
-		// get tile metadata for secondary tile (e.g. "32_507_5491_2")
-		tile, err = getGeotiffTile(easting, northing, zone, 2)
-		if err == nil {
-			tiles = append(tiles, tile)
-
-			// get tile metadata for tertiary tile (e.g. "32_507_5491_3")
-			tile, err = getGeotiffTile(easting, northing, zone, 3)
-			if err == nil {
-				tiles = append(tiles, tile)
-			}
 		}
 	}
 

@@ -75,7 +75,6 @@ func rawtifRequest(writer http.ResponseWriter, request *http.Request) {
 	zone := 0
 	easting := 0.0
 	northing := 0.0
-	var tile TileMetadata
 	var tiles []TileMetadata
 
 	// input from UTM coordinates
@@ -83,8 +82,8 @@ func rawtifRequest(writer http.ResponseWriter, request *http.Request) {
 	easting = rawtifRequest.Attributes.Easting
 	northing = rawtifRequest.Attributes.Northing
 
-	// get tile metadata for primary tile (e.g. "32_507_5491")
-	tile, err = getGeotiffTile(easting, northing, zone, 1)
+	// get all tiles (metadata) for given UTM coordinates
+	tiles, err = getAllTilesUTM(zone, easting, northing)
 	if err != nil {
 		slog.Warn("rawtif request: error getting GeoTIFF tile for UTM coordinates", "error", err,
 			"easting", easting, "northing", northing, "zone", zone, "ID", rawtifRequest.ID)
@@ -93,19 +92,6 @@ func rawtifRequest(writer http.ResponseWriter, request *http.Request) {
 		rawtifResponse.Attributes.Error.Detail = err.Error()
 		buildRawTIFResponse(writer, http.StatusBadRequest, rawtifResponse)
 		return
-	}
-	tiles = append(tiles, tile)
-
-	// get tile metadata for secondary tile (e.g. "32_507_5491_2")
-	tile, err = getGeotiffTile(easting, northing, zone, 2)
-	if err == nil {
-		tiles = append(tiles, tile)
-
-		// get tile metadata for tertiary tile (e.g. "32_507_5491_3")
-		tile, err = getGeotiffTile(easting, northing, zone, 3)
-		if err == nil {
-			tiles = append(tiles, tile)
-		}
 	}
 
 	// build rawtif for all existing tiles

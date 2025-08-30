@@ -78,7 +78,6 @@ func hillshadeRequest(writer http.ResponseWriter, request *http.Request) {
 	northing := 0.0
 	longitude := 0.0
 	latitude := 0.0
-	var tile TileMetadata
 	var tiles []TileMetadata
 	var outputFormat string
 
@@ -90,8 +89,8 @@ func hillshadeRequest(writer http.ResponseWriter, request *http.Request) {
 		northing = hillshadeRequest.Attributes.Northing
 		outputFormat = "geotiff"
 
-		// get tile metadata for primary tile (e.g. "32_507_5491")
-		tile, err = getGeotiffTile(easting, northing, zone, 1)
+		// get all tiles (metadata) for given UTM coordinates
+		tiles, err = getAllTilesUTM(zone, easting, northing)
 		if err != nil {
 			slog.Warn("hillshade request: error getting GeoTIFF tile for UTM coordinates", "error", err,
 				"easting", easting, "northing", northing, "zone", zone, "ID", hillshadeRequest.ID)
@@ -101,27 +100,14 @@ func hillshadeRequest(writer http.ResponseWriter, request *http.Request) {
 			buildHillshadeResponse(writer, http.StatusBadRequest, hillshadeResponse)
 			return
 		}
-		tiles = append(tiles, tile)
-
-		// get tile metadata for secondary tile (e.g. "32_507_5491_2")
-		tile, err = getGeotiffTile(easting, northing, zone, 2)
-		if err == nil {
-			tiles = append(tiles, tile)
-
-			// get tile metadata for tertiary tile (e.g. "32_507_5491_3")
-			tile, err = getGeotiffTile(easting, northing, zone, 3)
-			if err == nil {
-				tiles = append(tiles, tile)
-			}
-		}
 	} else {
 		// input from lon/lat coordinates
 		longitude = hillshadeRequest.Attributes.Longitude
 		latitude = hillshadeRequest.Attributes.Latitude
 		outputFormat = "png"
 
-		// get tile metadata for primary tile (e.g. "32_507_5491")
-		tile, zone, easting, northing, err = getTileUTM(longitude, latitude)
+		// get all tiles (metadata) for given lon/lat coordinates
+		tiles, err = getAllTilesLonLat(longitude, latitude)
 		if err != nil {
 			err = fmt.Errorf("error [%w] getting tile for coordinates lon: %.8f, lat: %.8f", err, longitude, latitude)
 			slog.Warn("hillshade request: error getting GeoTIFF tile for lon/lat coordinates", "error", err,
@@ -131,19 +117,6 @@ func hillshadeRequest(writer http.ResponseWriter, request *http.Request) {
 			hillshadeResponse.Attributes.Error.Detail = err.Error()
 			buildHillshadeResponse(writer, http.StatusBadRequest, hillshadeResponse)
 			return
-		}
-		tiles = append(tiles, tile)
-
-		// get tile metadata for secondary tile (e.g. "32_507_5491_2")
-		tile, err = getGeotiffTile(easting, northing, zone, 2)
-		if err == nil {
-			tiles = append(tiles, tile)
-
-			// get tile metadata for tertiary tile (e.g. "32_507_5491_3")
-			tile, err = getGeotiffTile(easting, northing, zone, 3)
-			if err == nil {
-				tiles = append(tiles, tile)
-			}
 		}
 	}
 

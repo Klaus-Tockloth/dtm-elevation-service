@@ -7,6 +7,7 @@
 # - v1.1.0 - 2025-07-07: 1.24.3 -> 1.24.4
 # - v1.2.0 - 2025-07-14: 1.24.4 -> 1.24.5
 # - v1.3.0 - 2025-08-09: 1.24.5 -> 1.24.6
+# - v1.4.0 - 2025-08-29: 1.24.6 -> 1.25.0
 #
 # Usage:
 #  - docker build --progress=plain -t dtm-elevation-service-linux-amd64 .
@@ -16,7 +17,7 @@
 # ------------------------------------
 
 # go version
-FROM golang:1.24.6-bookworm AS builder
+FROM golang:1.25.0-bookworm AS builder
 
 # install cross-compilation packages
 # RUN apt-get update && apt-get install -y --no-install-recommends gcc-x86-64-linux-gnu
