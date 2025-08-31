@@ -62,6 +62,16 @@ func tpiRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	tpiResponse.ID = tpiRequest.ID
+	tpiResponse.Attributes.Zone = tpiRequest.Attributes.Zone
+	tpiResponse.Attributes.Easting = tpiRequest.Attributes.Easting
+	tpiResponse.Attributes.Northing = tpiRequest.Attributes.Northing
+	tpiResponse.Attributes.Longitude = tpiRequest.Attributes.Longitude
+	tpiResponse.Attributes.Latitude = tpiRequest.Attributes.Latitude
+	tpiResponse.Attributes.ColorTextFileContent = tpiRequest.Attributes.ColorTextFileContent
+	tpiResponse.Attributes.ColoringAlgorithm = tpiRequest.Attributes.ColoringAlgorithm
+
 	// verify request data
 	err = verifyTPIRequestData(request, tpiRequest)
 	if err != nil {
@@ -134,18 +144,8 @@ func tpiRequest(writer http.ResponseWriter, request *http.Request) {
 		tpiResponse.Attributes.TPIs = append(tpiResponse.Attributes.TPIs, tpi)
 	}
 
-	// copy request parameters into response
-	tpiResponse.ID = tpiRequest.ID
-	tpiResponse.Attributes.IsError = false
-	tpiResponse.Attributes.Zone = tpiRequest.Attributes.Zone
-	tpiResponse.Attributes.Easting = tpiRequest.Attributes.Easting
-	tpiResponse.Attributes.Northing = tpiRequest.Attributes.Northing
-	tpiResponse.Attributes.Longitude = tpiRequest.Attributes.Longitude
-	tpiResponse.Attributes.Latitude = tpiRequest.Attributes.Latitude
-	tpiResponse.Attributes.ColorTextFileContent = tpiRequest.Attributes.ColorTextFileContent
-	tpiResponse.Attributes.ColoringAlgorithm = tpiRequest.Attributes.ColoringAlgorithm
-
 	// success response
+	tpiResponse.Attributes.IsError = false
 	buildTPIResponse(writer, http.StatusOK, tpiResponse)
 }
 
@@ -367,7 +367,7 @@ func generateTPIObjectForTile(tile TileMetadata, outputFormat string, colorTextF
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 4. get bounding box (in wgs84) for webmercator tif (georeference of webmercator png )
-		boundingBox, err = calculateWGS84BoundingBox(tile.Path)
+		boundingBox, err = calculateWGS84BoundingBox(tile)
 		if err != nil {
 			return tpi, fmt.Errorf("error [%w] at calculateWGS84BoundingBox(), file: %s", err, tile.Path)
 		}

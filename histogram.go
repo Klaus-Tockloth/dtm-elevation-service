@@ -69,6 +69,20 @@ func histogramRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	histogramResponse.ID = histogramRequest.ID
+	histogramResponse.Attributes.Zone = histogramRequest.Attributes.Zone
+	histogramResponse.Attributes.Easting = histogramRequest.Attributes.Easting
+	histogramResponse.Attributes.Northing = histogramRequest.Attributes.Northing
+	histogramResponse.Attributes.Longitude = histogramRequest.Attributes.Longitude
+	histogramResponse.Attributes.Latitude = histogramRequest.Attributes.Latitude
+	histogramResponse.Attributes.TypeOfVisualization = histogramRequest.Attributes.TypeOfVisualization
+	histogramResponse.Attributes.GradientAlgorithm = histogramRequest.Attributes.GradientAlgorithm
+	histogramResponse.Attributes.TypeOfHistogram = histogramRequest.Attributes.TypeOfHistogram
+	histogramResponse.Attributes.NumberOfBins = histogramRequest.Attributes.NumberOfBins
+	histogramResponse.Attributes.MinValue = histogramRequest.Attributes.MinValue
+	histogramResponse.Attributes.MaxValue = histogramRequest.Attributes.MaxValue
+
 	// verify request data
 	err = verifyHistogramRequestData(request, histogramRequest)
 	if err != nil {
@@ -143,22 +157,8 @@ func histogramRequest(writer http.ResponseWriter, request *http.Request) {
 		histogramResponse.Attributes.Histograms = append(histogramResponse.Attributes.Histograms, histogram)
 	}
 
-	// copy request parameters into response
-	histogramResponse.ID = histogramRequest.ID
-	histogramResponse.Attributes.IsError = false
-	histogramResponse.Attributes.Zone = histogramRequest.Attributes.Zone
-	histogramResponse.Attributes.Easting = histogramRequest.Attributes.Easting
-	histogramResponse.Attributes.Northing = histogramRequest.Attributes.Northing
-	histogramResponse.Attributes.Longitude = histogramRequest.Attributes.Longitude
-	histogramResponse.Attributes.Latitude = histogramRequest.Attributes.Latitude
-	histogramResponse.Attributes.TypeOfVisualization = histogramRequest.Attributes.TypeOfVisualization
-	histogramResponse.Attributes.GradientAlgorithm = histogramRequest.Attributes.GradientAlgorithm
-	histogramResponse.Attributes.TypeOfHistogram = histogramRequest.Attributes.TypeOfHistogram
-	histogramResponse.Attributes.NumberOfBins = histogramRequest.Attributes.NumberOfBins
-	histogramResponse.Attributes.MinValue = histogramRequest.Attributes.MinValue
-	histogramResponse.Attributes.MaxValue = histogramRequest.Attributes.MaxValue
-
 	// success response
+	histogramResponse.Attributes.IsError = false
 	buildHistogramResponse(writer, http.StatusOK, histogramResponse)
 }
 

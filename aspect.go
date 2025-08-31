@@ -62,6 +62,17 @@ func aspectRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	aspectResponse.ID = aspectRequest.ID
+	aspectResponse.Attributes.Zone = aspectRequest.Attributes.Zone
+	aspectResponse.Attributes.Easting = aspectRequest.Attributes.Easting
+	aspectResponse.Attributes.Northing = aspectRequest.Attributes.Northing
+	aspectResponse.Attributes.Longitude = aspectRequest.Attributes.Longitude
+	aspectResponse.Attributes.Latitude = aspectRequest.Attributes.Latitude
+	aspectResponse.Attributes.GradientAlgorithm = aspectRequest.Attributes.GradientAlgorithm
+	aspectResponse.Attributes.ColorTextFileContent = aspectRequest.Attributes.ColorTextFileContent
+	aspectResponse.Attributes.ColoringAlgorithm = aspectRequest.Attributes.ColoringAlgorithm
+
 	// verify request data
 	err = verifyAspectRequestData(request, aspectRequest)
 	if err != nil {
@@ -134,25 +145,14 @@ func aspectRequest(writer http.ResponseWriter, request *http.Request) {
 		aspectResponse.Attributes.Aspects = append(aspectResponse.Attributes.Aspects, aspect)
 	}
 
-	// copy request parameters into response
-	aspectResponse.ID = aspectRequest.ID
-	aspectResponse.Attributes.IsError = false
-	aspectResponse.Attributes.Zone = aspectRequest.Attributes.Zone
-	aspectResponse.Attributes.Easting = aspectRequest.Attributes.Easting
-	aspectResponse.Attributes.Northing = aspectRequest.Attributes.Northing
-	aspectResponse.Attributes.Longitude = aspectRequest.Attributes.Longitude
-	aspectResponse.Attributes.Latitude = aspectRequest.Attributes.Latitude
-	aspectResponse.Attributes.GradientAlgorithm = aspectRequest.Attributes.GradientAlgorithm
-	aspectResponse.Attributes.ColorTextFileContent = aspectRequest.Attributes.ColorTextFileContent
-	aspectResponse.Attributes.ColoringAlgorithm = aspectRequest.Attributes.ColoringAlgorithm
-
 	// success response
+	aspectResponse.Attributes.IsError = false
 	buildAspectResponse(writer, http.StatusOK, aspectResponse)
 }
 
 /*
-verifyAspectRequestData verifies 'aspect' request data.
-It performs several checks on the request data to ensure its validity.
+verifyAspectRequestData verifies 'aspect' request data. It performs
+several checks on the request data to ensure its validity.
 */
 func verifyAspectRequestData(request *http.Request, aspectRequest AspectRequest) error {
 	// verify HTTP header
@@ -375,7 +375,7 @@ func generateAspectObjectForTile(tile TileMetadata, outputFormat string, gradien
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 4. get bounding box (in wgs84) for webmercator tif (georeference of webmercator png )
-		boundingBox, err = calculateWGS84BoundingBox(tile.Path)
+		boundingBox, err = calculateWGS84BoundingBox(tile)
 		if err != nil {
 			return aspect, fmt.Errorf("error [%w] at calculateWGS84BoundingBox(), file: %s", err, tile.Path)
 		}

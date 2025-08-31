@@ -62,6 +62,15 @@ func contoursRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	contoursResponse.ID = contoursRequest.ID
+	contoursResponse.Attributes.Zone = contoursRequest.Attributes.Zone
+	contoursResponse.Attributes.Easting = contoursRequest.Attributes.Easting
+	contoursResponse.Attributes.Northing = contoursRequest.Attributes.Northing
+	contoursResponse.Attributes.Longitude = contoursRequest.Attributes.Longitude
+	contoursResponse.Attributes.Latitude = contoursRequest.Attributes.Latitude
+	contoursResponse.Attributes.Equidistance = contoursRequest.Attributes.Equidistance
+
 	// verify request data
 	err = verifyContoursRequestData(request, contoursRequest)
 	if err != nil {
@@ -134,17 +143,8 @@ func contoursRequest(writer http.ResponseWriter, request *http.Request) {
 		contoursResponse.Attributes.Contours = append(contoursResponse.Attributes.Contours, contour)
 	}
 
-	// copy request parameters into response
-	contoursResponse.ID = contoursRequest.ID
-	contoursResponse.Attributes.IsError = false
-	contoursResponse.Attributes.Zone = contoursRequest.Attributes.Zone
-	contoursResponse.Attributes.Easting = contoursRequest.Attributes.Easting
-	contoursResponse.Attributes.Northing = contoursRequest.Attributes.Northing
-	contoursResponse.Attributes.Longitude = contoursRequest.Attributes.Longitude
-	contoursResponse.Attributes.Latitude = contoursRequest.Attributes.Latitude
-	contoursResponse.Attributes.Equidistance = contoursRequest.Attributes.Equidistance
-
 	// success response
+	contoursResponse.Attributes.IsError = false
 	buildContoursResponse(writer, http.StatusOK, contoursResponse)
 }
 

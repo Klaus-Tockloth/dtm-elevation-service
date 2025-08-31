@@ -62,6 +62,16 @@ func triRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	triResponse.ID = triRequest.ID
+	triResponse.Attributes.Zone = triRequest.Attributes.Zone
+	triResponse.Attributes.Easting = triRequest.Attributes.Easting
+	triResponse.Attributes.Northing = triRequest.Attributes.Northing
+	triResponse.Attributes.Longitude = triRequest.Attributes.Longitude
+	triResponse.Attributes.Latitude = triRequest.Attributes.Latitude
+	triResponse.Attributes.ColorTextFileContent = triRequest.Attributes.ColorTextFileContent
+	triResponse.Attributes.ColoringAlgorithm = triRequest.Attributes.ColoringAlgorithm
+
 	// verify request data
 	err = verifyTRIRequestData(request, triRequest)
 	if err != nil {
@@ -134,18 +144,8 @@ func triRequest(writer http.ResponseWriter, request *http.Request) {
 		triResponse.Attributes.TRIs = append(triResponse.Attributes.TRIs, tri)
 	}
 
-	// copy request parameters into response
-	triResponse.ID = triRequest.ID
-	triResponse.Attributes.IsError = false
-	triResponse.Attributes.Zone = triRequest.Attributes.Zone
-	triResponse.Attributes.Easting = triRequest.Attributes.Easting
-	triResponse.Attributes.Northing = triRequest.Attributes.Northing
-	triResponse.Attributes.Longitude = triRequest.Attributes.Longitude
-	triResponse.Attributes.Latitude = triRequest.Attributes.Latitude
-	triResponse.Attributes.ColorTextFileContent = triRequest.Attributes.ColorTextFileContent
-	triResponse.Attributes.ColoringAlgorithm = triRequest.Attributes.ColoringAlgorithm
-
 	// success response
+	triResponse.Attributes.IsError = false
 	buildTRIResponse(writer, http.StatusOK, triResponse)
 }
 
@@ -371,7 +371,7 @@ func generateTRIObjectForTile(tile TileMetadata, outputFormat string, colorTextF
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 4. get bounding box (in wgs84) for webmercator tif (georeference of webmercator png )
-		boundingBox, err = calculateWGS84BoundingBox(tile.Path)
+		boundingBox, err = calculateWGS84BoundingBox(tile)
 		if err != nil {
 			return tri, fmt.Errorf("error [%w] at calculateWGS84BoundingBox(), file: %s", err, tile.Path)
 		}

@@ -19,6 +19,8 @@ Releases:
 - v1.6.1 - 2025-08-06: tri algorithm: Riley instead of Wilson
 - v1.7.0 - 2025-08-09: added: histogram, libs updated, compiled with go1.24.6
 - v1.7.1 - 2025-08-29: logic 'find all tiles' fixed, compiled with go1.25.0
+- v1.7.2 - 2025-08-30: error handling improved
+- v1.7.3 - 2025-08-31: robustness in calculateWGS84BoundingBox() improved
 
 Author:
 - Klaus Tockloth
@@ -70,8 +72,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.7.1"
-	progDate      = "2025-08-29"
+	progVersion   = "v1.7.3"
+	progDate      = "2025-08-31"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"

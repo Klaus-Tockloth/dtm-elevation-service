@@ -61,6 +61,12 @@ func rawtifRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	rawtifResponse.ID = rawtifRequest.ID
+	rawtifResponse.Attributes.Zone = rawtifRequest.Attributes.Zone
+	rawtifResponse.Attributes.Easting = rawtifRequest.Attributes.Easting
+	rawtifResponse.Attributes.Northing = rawtifRequest.Attributes.Northing
+
 	// verify request data
 	err = verifyRawTIFRequestData(request, rawtifRequest)
 	if err != nil {
@@ -108,14 +114,8 @@ func rawtifRequest(writer http.ResponseWriter, request *http.Request) {
 		rawtifResponse.Attributes.RawTIFs = append(rawtifResponse.Attributes.RawTIFs, rawtif)
 	}
 
-	// copy request parameters into response
-	rawtifResponse.ID = rawtifRequest.ID
-	rawtifResponse.Attributes.IsError = false
-	rawtifResponse.Attributes.Zone = rawtifRequest.Attributes.Zone
-	rawtifResponse.Attributes.Easting = rawtifRequest.Attributes.Easting
-	rawtifResponse.Attributes.Northing = rawtifRequest.Attributes.Northing
-
 	// success response
+	rawtifResponse.Attributes.IsError = false
 	buildRawTIFResponse(writer, http.StatusOK, rawtifResponse)
 }
 

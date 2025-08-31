@@ -62,6 +62,17 @@ func slopeRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	slopeResponse.ID = slopeRequest.ID
+	slopeResponse.Attributes.Zone = slopeRequest.Attributes.Zone
+	slopeResponse.Attributes.Easting = slopeRequest.Attributes.Easting
+	slopeResponse.Attributes.Northing = slopeRequest.Attributes.Northing
+	slopeResponse.Attributes.Longitude = slopeRequest.Attributes.Longitude
+	slopeResponse.Attributes.Latitude = slopeRequest.Attributes.Latitude
+	slopeResponse.Attributes.GradientAlgorithm = slopeRequest.Attributes.GradientAlgorithm
+	slopeResponse.Attributes.ColorTextFileContent = slopeRequest.Attributes.ColorTextFileContent
+	slopeResponse.Attributes.ColoringAlgorithm = slopeRequest.Attributes.ColoringAlgorithm
+
 	// verify request data
 	err = verifySlopeRequestData(request, slopeRequest)
 	if err != nil {
@@ -134,19 +145,8 @@ func slopeRequest(writer http.ResponseWriter, request *http.Request) {
 		slopeResponse.Attributes.Slopes = append(slopeResponse.Attributes.Slopes, slope)
 	}
 
-	// copy request parameters into response
-	slopeResponse.ID = slopeRequest.ID
-	slopeResponse.Attributes.IsError = false
-	slopeResponse.Attributes.Zone = slopeRequest.Attributes.Zone
-	slopeResponse.Attributes.Easting = slopeRequest.Attributes.Easting
-	slopeResponse.Attributes.Northing = slopeRequest.Attributes.Northing
-	slopeResponse.Attributes.Longitude = slopeRequest.Attributes.Longitude
-	slopeResponse.Attributes.Latitude = slopeRequest.Attributes.Latitude
-	slopeResponse.Attributes.GradientAlgorithm = slopeRequest.Attributes.GradientAlgorithm
-	slopeResponse.Attributes.ColorTextFileContent = slopeRequest.Attributes.ColorTextFileContent
-	slopeResponse.Attributes.ColoringAlgorithm = slopeRequest.Attributes.ColoringAlgorithm
-
 	// success response
+	slopeResponse.Attributes.IsError = false
 	buildSlopeResponse(writer, http.StatusOK, slopeResponse)
 }
 
@@ -376,7 +376,7 @@ func generateSlopeObjectForTile(tile TileMetadata, outputFormat string, gradient
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 4. get bounding box (in wgs84) for webmercator tif (georeference of webmercator png )
-		boundingBox, err = calculateWGS84BoundingBox(tile.Path)
+		boundingBox, err = calculateWGS84BoundingBox(tile)
 		if err != nil {
 			return slope, fmt.Errorf("error [%w] at calculateWGS84BoundingBox(), file: %s", err, tile.Path)
 		}

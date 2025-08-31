@@ -62,6 +62,16 @@ func colorReliefRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	colorReliefResponse.ID = colorReliefRequest.ID
+	colorReliefResponse.Attributes.Zone = colorReliefRequest.Attributes.Zone
+	colorReliefResponse.Attributes.Easting = colorReliefRequest.Attributes.Easting
+	colorReliefResponse.Attributes.Northing = colorReliefRequest.Attributes.Northing
+	colorReliefResponse.Attributes.Longitude = colorReliefRequest.Attributes.Longitude
+	colorReliefResponse.Attributes.Latitude = colorReliefRequest.Attributes.Latitude
+	colorReliefResponse.Attributes.ColorTextFileContent = colorReliefRequest.Attributes.ColorTextFileContent
+	colorReliefResponse.Attributes.ColoringAlgorithm = colorReliefRequest.Attributes.ColoringAlgorithm
+
 	// verify request data
 	err = verifyColorReliefRequestData(request, colorReliefRequest)
 	if err != nil {
@@ -134,18 +144,8 @@ func colorReliefRequest(writer http.ResponseWriter, request *http.Request) {
 		colorReliefResponse.Attributes.ColorReliefs = append(colorReliefResponse.Attributes.ColorReliefs, colorRelief)
 	}
 
-	// copy request parameters into response
-	colorReliefResponse.ID = colorReliefRequest.ID
-	colorReliefResponse.Attributes.IsError = false
-	colorReliefResponse.Attributes.Zone = colorReliefRequest.Attributes.Zone
-	colorReliefResponse.Attributes.Easting = colorReliefRequest.Attributes.Easting
-	colorReliefResponse.Attributes.Northing = colorReliefRequest.Attributes.Northing
-	colorReliefResponse.Attributes.Longitude = colorReliefRequest.Attributes.Longitude
-	colorReliefResponse.Attributes.Latitude = colorReliefRequest.Attributes.Latitude
-	colorReliefResponse.Attributes.ColorTextFileContent = colorReliefRequest.Attributes.ColorTextFileContent
-	colorReliefResponse.Attributes.ColoringAlgorithm = colorReliefRequest.Attributes.ColoringAlgorithm
-
 	// success response
+	colorReliefResponse.Attributes.IsError = false
 	buildColorReliefResponse(writer, http.StatusOK, colorReliefResponse)
 }
 
@@ -354,7 +354,7 @@ func generateColorReliefObjectForTile(tile TileMetadata, outputFormat string, co
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 4. get bounding box (in wgs84) for webmercator tif (georeference of webmercator png )
-		boundingBox, err = calculateWGS84BoundingBox(tile.Path)
+		boundingBox, err = calculateWGS84BoundingBox(tile)
 		if err != nil {
 			return colorRelief, fmt.Errorf("error [%w] at calculateWGS84BoundingBox(), file: %s", err, tile.Path)
 		}

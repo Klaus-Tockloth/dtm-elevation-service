@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/airbusgeo/godal"
 )
@@ -280,9 +281,10 @@ func getElevationFromUTM(xUTM, yUTM float64, filename string) (elevation float64
 calculateWGS84BoundingBox takes a GeoTIFF filename and calculates the bounding box in
 WGS84 (Lon/Lat). It assumes the input file has a defined spatial reference system.
 */
-func calculateWGS84BoundingBox(filename string) (WGS84BoundingBox, error) {
+func calculateWGS84BoundingBox(tile TileMetadata) (WGS84BoundingBox, error) {
 	latLonBBox := WGS84BoundingBox{}
 
+	filename := tile.Path
 	dataset, err := godal.Open(filename)
 	if err != nil {
 		return latLonBBox, fmt.Errorf("error [%w] at godal.Open(), file %s", err, filename)
@@ -328,10 +330,22 @@ func calculateWGS84BoundingBox(filename string) (WGS84BoundingBox, error) {
 
 	// ----- transform to WGS84 (Lon/Lat) -----
 
-	// get source Spatial Reference System (SRS)
-	srcSRS := dataset.SpatialRef()
-	if srcSRS == nil {
-		return latLonBBox, fmt.Errorf("source Spatial Reference System (SRS) not found, transformation not possible")
+	// derive EPSG from given zone in tile index (e.g. "32_668_5688")
+	parts := strings.Split(tile.Index, "_")
+	sourceEPSG := 0
+	switch parts[0] {
+	case "32":
+		sourceEPSG = 25832
+	case "33":
+		sourceEPSG = 25833
+	default:
+		return latLonBBox, fmt.Errorf("UTM zone [%v] from tile [%v] not supported ", parts[0], tile.Index)
+	}
+
+	// create source Spatial Reference System (SRS) from the provided EPSG (some tiles [e.g. for Sachsen-Anhalt] do not have SRS metadata)
+	srcSRS, err := godal.NewSpatialRefFromEPSG(sourceEPSG)
+	if err != nil {
+		return latLonBBox, fmt.Errorf("error creating source SRS from EPSG:%d: %w", sourceEPSG, err)
 	}
 	defer srcSRS.Close()
 

@@ -73,6 +73,16 @@ func roughnessRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	roughnessResponse.ID = roughnessRequest.ID
+	roughnessResponse.Attributes.Zone = roughnessRequest.Attributes.Zone
+	roughnessResponse.Attributes.Easting = roughnessRequest.Attributes.Easting
+	roughnessResponse.Attributes.Northing = roughnessRequest.Attributes.Northing
+	roughnessResponse.Attributes.Longitude = roughnessRequest.Attributes.Longitude
+	roughnessResponse.Attributes.Latitude = roughnessRequest.Attributes.Latitude
+	roughnessResponse.Attributes.ColorTextFileContent = roughnessRequest.Attributes.ColorTextFileContent
+	roughnessResponse.Attributes.ColoringAlgorithm = roughnessRequest.Attributes.ColoringAlgorithm
+
 	zone := 0
 	easting := 0.0
 	northing := 0.0
@@ -134,18 +144,8 @@ func roughnessRequest(writer http.ResponseWriter, request *http.Request) {
 		roughnessResponse.Attributes.Roughnesses = append(roughnessResponse.Attributes.Roughnesses, roughness)
 	}
 
-	// copy request parameters into response
-	roughnessResponse.ID = roughnessRequest.ID
-	roughnessResponse.Attributes.IsError = false
-	roughnessResponse.Attributes.Zone = roughnessRequest.Attributes.Zone
-	roughnessResponse.Attributes.Easting = roughnessRequest.Attributes.Easting
-	roughnessResponse.Attributes.Northing = roughnessRequest.Attributes.Northing
-	roughnessResponse.Attributes.Longitude = roughnessRequest.Attributes.Longitude
-	roughnessResponse.Attributes.Latitude = roughnessRequest.Attributes.Latitude
-	roughnessResponse.Attributes.ColorTextFileContent = roughnessRequest.Attributes.ColorTextFileContent
-	roughnessResponse.Attributes.ColoringAlgorithm = roughnessRequest.Attributes.ColoringAlgorithm
-
 	// success response
+	roughnessResponse.Attributes.IsError = false
 	buildRoughnessResponse(writer, http.StatusOK, roughnessResponse)
 }
 
@@ -367,7 +367,7 @@ func generateRoughnessObjectForTile(tile TileMetadata, outputFormat string, colo
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 4. get bounding box (in wgs84) for webmercator tif (georeference of webmercator png )
-		boundingBox, err = calculateWGS84BoundingBox(tile.Path)
+		boundingBox, err = calculateWGS84BoundingBox(tile)
 		if err != nil {
 			return roughness, fmt.Errorf("error [%w] at calculateWGS84BoundingBox(), file: %s", err, tile.Path)
 		}

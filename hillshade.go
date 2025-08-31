@@ -62,6 +62,19 @@ func hillshadeRequest(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// copy request parameters into response
+	hillshadeResponse.ID = hillshadeRequest.ID
+	hillshadeResponse.Attributes.Zone = hillshadeRequest.Attributes.Zone
+	hillshadeResponse.Attributes.Easting = hillshadeRequest.Attributes.Easting
+	hillshadeResponse.Attributes.Northing = hillshadeRequest.Attributes.Northing
+	hillshadeResponse.Attributes.Longitude = hillshadeRequest.Attributes.Longitude
+	hillshadeResponse.Attributes.Latitude = hillshadeRequest.Attributes.Latitude
+	hillshadeResponse.Attributes.GradientAlgorithm = hillshadeRequest.Attributes.GradientAlgorithm
+	hillshadeResponse.Attributes.VerticalExaggeration = hillshadeRequest.Attributes.VerticalExaggeration
+	hillshadeResponse.Attributes.AzimuthOfLight = hillshadeRequest.Attributes.AzimuthOfLight
+	hillshadeResponse.Attributes.AltitudeOfLight = hillshadeRequest.Attributes.AltitudeOfLight
+	hillshadeResponse.Attributes.ShadingVariant = hillshadeRequest.Attributes.ShadingVariant
+
 	// verify request data
 	err = verifyHillshadeRequestData(request, hillshadeRequest)
 	if err != nil {
@@ -139,21 +152,8 @@ func hillshadeRequest(writer http.ResponseWriter, request *http.Request) {
 		hillshadeResponse.Attributes.Hillshades = append(hillshadeResponse.Attributes.Hillshades, hillshade)
 	}
 
-	// copy request parameters into response
-	hillshadeResponse.ID = hillshadeRequest.ID
-	hillshadeResponse.Attributes.IsError = false
-	hillshadeResponse.Attributes.Zone = hillshadeRequest.Attributes.Zone
-	hillshadeResponse.Attributes.Easting = hillshadeRequest.Attributes.Easting
-	hillshadeResponse.Attributes.Northing = hillshadeRequest.Attributes.Northing
-	hillshadeResponse.Attributes.Longitude = hillshadeRequest.Attributes.Longitude
-	hillshadeResponse.Attributes.Latitude = hillshadeRequest.Attributes.Latitude
-	hillshadeResponse.Attributes.GradientAlgorithm = hillshadeRequest.Attributes.GradientAlgorithm
-	hillshadeResponse.Attributes.VerticalExaggeration = hillshadeRequest.Attributes.VerticalExaggeration
-	hillshadeResponse.Attributes.AzimuthOfLight = hillshadeRequest.Attributes.AzimuthOfLight
-	hillshadeResponse.Attributes.AltitudeOfLight = hillshadeRequest.Attributes.AltitudeOfLight
-	hillshadeResponse.Attributes.ShadingVariant = hillshadeRequest.Attributes.ShadingVariant
-
 	// success response
+	hillshadeResponse.Attributes.IsError = false
 	buildHillshadeResponse(writer, http.StatusOK, hillshadeResponse)
 }
 
@@ -417,7 +417,7 @@ func generateHillshadeObjectForTile(tile TileMetadata, outputFormat string, grad
 		// fmt.Printf("commandOutput: %s\n", commandOutput)
 
 		// 4. get bounding box (in wgs84) for webmercator tif (georeference of webmercator png )
-		boundingBox, err = calculateWGS84BoundingBox(tile.Path)
+		boundingBox, err = calculateWGS84BoundingBox(tile)
 		if err != nil {
 			return hillshade, fmt.Errorf("error [%w] at calculateWGS84BoundingBox(), file: %s", err, tile.Path)
 		}
