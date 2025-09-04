@@ -21,6 +21,7 @@ Releases:
 - v1.7.1 - 2025-08-29: logic 'find all tiles' fixed, compiled with go1.25.0
 - v1.7.2 - 2025-08-30: error handling improved
 - v1.7.3 - 2025-08-31: robustness in calculateWGS84BoundingBox() improved
+- v1.8.9 - 2025-09-04: added: elevation profile
 
 Author:
 - Klaus Tockloth
@@ -72,8 +73,8 @@ import (
 // general program info
 var (
 	progName      = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion   = "v1.7.3"
-	progDate      = "2025-08-31"
+	progVersion   = "v1.8.0"
+	progDate      = "2025-09-04"
 	progPurpose   = "dtm elevation service"
 	progInfo      = "Service for determining elevation information based on accurate DTM (Digital Terrain Model) data."
 	progCopyright = "© 2025 | Klaus Tockloth"
@@ -96,22 +97,23 @@ var progConfig ProgConfig
 
 // statistics
 var (
-	PointRequests       uint64
-	UTMPointRequests    uint64
-	GPXRequests         uint64
-	GPXAnalyzeRequests  uint64
-	GPXPoints           uint64
-	DGMPoints           uint64
-	ContoursRequests    uint64
-	HillshadeRequests   uint64
-	SlopeRequests       uint64
-	AspectRequests      uint64
-	TPIRequests         uint64
-	TRIRequests         uint64
-	RoughnessRequests   uint64
-	RawTIFRequests      uint64
-	ColorReliefRequests uint64
-	HistogramRequests   uint64
+	PointRequests            uint64
+	UTMPointRequests         uint64
+	GPXRequests              uint64
+	GPXAnalyzeRequests       uint64
+	GPXPoints                uint64
+	DGMPoints                uint64
+	ContoursRequests         uint64
+	HillshadeRequests        uint64
+	SlopeRequests            uint64
+	AspectRequests           uint64
+	TPIRequests              uint64
+	TRIRequests              uint64
+	RoughnessRequests        uint64
+	RawTIFRequests           uint64
+	ColorReliefRequests      uint64
+	HistogramRequests        uint64
+	ElevationProfileRequests uint64
 )
 
 /*
@@ -230,6 +232,9 @@ func main() {
 	http.HandleFunc("POST /v1/histogram", histogramRequest)
 	http.HandleFunc("OPTIONS /v1/histogram", corsOptionsHandler)
 
+	http.HandleFunc("POST /v1/elevationprofile", elevationprofileRequest)
+	http.HandleFunc("OPTIONS /v1/elevationprofile", corsOptionsHandler)
+
 	// handle unsupported routes or methods
 	http.HandleFunc("/", unsupportedRequest)
 
@@ -328,6 +333,7 @@ func logStatistics() {
 	currentRawTIFRequests := atomic.LoadUint64(&RawTIFRequests)
 	currentColorReliefRequests := atomic.LoadUint64(&ColorReliefRequests)
 	currentHistogramRequests := atomic.LoadUint64(&HistogramRequests)
+	currentElevationProfileRequests := atomic.LoadUint64(&ElevationProfileRequests)
 
 	// reset statistics
 	atomic.StoreUint64(&PointRequests, 0)
@@ -346,6 +352,7 @@ func logStatistics() {
 	atomic.StoreUint64(&RawTIFRequests, 0)
 	atomic.StoreUint64(&ColorReliefRequests, 0)
 	atomic.StoreUint64(&HistogramRequests, 0)
+	atomic.StoreUint64(&ElevationProfileRequests, 0)
 
 	// log statistics
 	slog.Info("load statistics",
@@ -365,6 +372,7 @@ func logStatistics() {
 		"RawTIFRequests", currentRawTIFRequests,
 		"ColorReliefRequests", currentColorReliefRequests,
 		"HistogramRequests", currentHistogramRequests,
+		"ElevationProfileRequests", currentElevationProfileRequests,
 	)
 }
 

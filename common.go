@@ -26,51 +26,54 @@ const (
 
 // JSON API types
 const (
-	TypePointRequest        = "PointRequest"
-	TypePointResponse       = "PointResponse"
-	TypeUTMPointRequest     = "UTMPointRequest"
-	TypeUTMPointResponse    = "UTMPointResponse"
-	TypeGPXRequest          = "GPXRequest"
-	TypeGPXResponse         = "GPXResponse"
-	TypeGPXAnalyzeRequest   = "GPXAnalyzeRequest"
-	TypeGPXAnalyzeResponse  = "GPXAnalyzeResponse"
-	TypeContoursRequest     = "ContoursRequest"
-	TypeContoursResponse    = "ContoursResponse"
-	TypeHillshadeRequest    = "HillshadeRequest"
-	TypeHillshadeResponse   = "HillshadeResponse"
-	TypeSlopeRequest        = "SlopeRequest"
-	TypeSlopeResponse       = "SlopeResponse"
-	TypeAspectRequest       = "AspectRequest"
-	TypeAspectResponse      = "AspectResponse"
-	TypeTPIRequest          = "TPIRequest"
-	TypeTPIResponse         = "TPIResponse"
-	TypeTRIRequest          = "TRIRequest"
-	TypeTRIResponse         = "TRIResponse"
-	TypeRoughnessRequest    = "RoughnessRequest"
-	TypeRoughnessResponse   = "RoughnessResponse"
-	TypeRawTIFRequest       = "RawTIFRequest"
-	TypeRawTIFResponse      = "RawTIFResponse"
-	TypeColorReliefRequest  = "ColorReliefRequest"
-	TypeColorReliefResponse = "ColorReliefResponse"
-	TypeHistogramRequest    = "HistogramRequest"
-	TypeHistogramResponse   = "HistogramResponse"
+	TypePointRequest             = "PointRequest"
+	TypePointResponse            = "PointResponse"
+	TypeUTMPointRequest          = "UTMPointRequest"
+	TypeUTMPointResponse         = "UTMPointResponse"
+	TypeGPXRequest               = "GPXRequest"
+	TypeGPXResponse              = "GPXResponse"
+	TypeGPXAnalyzeRequest        = "GPXAnalyzeRequest"
+	TypeGPXAnalyzeResponse       = "GPXAnalyzeResponse"
+	TypeContoursRequest          = "ContoursRequest"
+	TypeContoursResponse         = "ContoursResponse"
+	TypeHillshadeRequest         = "HillshadeRequest"
+	TypeHillshadeResponse        = "HillshadeResponse"
+	TypeSlopeRequest             = "SlopeRequest"
+	TypeSlopeResponse            = "SlopeResponse"
+	TypeAspectRequest            = "AspectRequest"
+	TypeAspectResponse           = "AspectResponse"
+	TypeTPIRequest               = "TPIRequest"
+	TypeTPIResponse              = "TPIResponse"
+	TypeTRIRequest               = "TRIRequest"
+	TypeTRIResponse              = "TRIResponse"
+	TypeRoughnessRequest         = "RoughnessRequest"
+	TypeRoughnessResponse        = "RoughnessResponse"
+	TypeRawTIFRequest            = "RawTIFRequest"
+	TypeRawTIFResponse           = "RawTIFResponse"
+	TypeColorReliefRequest       = "ColorReliefRequest"
+	TypeColorReliefResponse      = "ColorReliefResponse"
+	TypeHistogramRequest         = "HistogramRequest"
+	TypeHistogramResponse        = "HistogramResponse"
+	TypeElevationProfileRequest  = "ElevationProfileRequest"
+	TypeElevationProfileResponse = "ElevationProfileResponse"
 )
 
 // request body limits (in bytes, for security reasons)
 const (
-	MaxPointRequestBodySize       = 4 * 1024
-	MaxGpxRequestBodySize         = 24 * 1024 * 1024
-	MaxGpxAnalyzeRequestBodySize  = 24 * 1024 * 1024
-	MaxContoursRequestBodySize    = 4 * 1024
-	MaxHillshadeRequestBodySize   = 4 * 1024
-	MaxSlopeRequestBodySize       = 16 * 1024
-	MaxAspectRequestBodySize      = 16 * 1024
-	MaxTPIRequestBodySize         = 16 * 1024
-	MaxTRIRequestBodySize         = 16 * 1024
-	MaxRoughnessRequestBodySize   = 16 * 1024
-	MaxRawTIFRequestBodySize      = 4 * 1024
-	MaxColorReliefRequestBodySize = 4 * 1024
-	MaxHistogramRequestBodySize   = 4 * 1024
+	MaxPointRequestBodySize            = 4 * 1024
+	MaxGpxRequestBodySize              = 24 * 1024 * 1024
+	MaxGpxAnalyzeRequestBodySize       = 24 * 1024 * 1024
+	MaxContoursRequestBodySize         = 4 * 1024
+	MaxHillshadeRequestBodySize        = 4 * 1024
+	MaxSlopeRequestBodySize            = 16 * 1024
+	MaxAspectRequestBodySize           = 16 * 1024
+	MaxTPIRequestBodySize              = 16 * 1024
+	MaxTRIRequestBodySize              = 16 * 1024
+	MaxRoughnessRequestBodySize        = 16 * 1024
+	MaxRawTIFRequestBodySize           = 4 * 1024
+	MaxColorReliefRequestBodySize      = 4 * 1024
+	MaxHistogramRequestBodySize        = 4 * 1024
+	MaxElevationProfileRequestBodySize = 4 * 1024
 )
 
 // ErrorObject represents error details.
@@ -807,6 +810,59 @@ type HistogramResponse struct {
 		Histograms          []Histogram
 		IsError             bool
 		Error               ErrorObject
+	}
+}
+
+// --------------------------------------------------------------------------------
+// Request  : Client -> ElevationProfileRequest  -> Service
+// Response : Client <- ElevationProfileResponse <- Service
+// --------------------------------------------------------------------------------
+
+// PointDefinition represents either WGS84 or UTM coordinates for a point.
+type PointDefinition struct {
+	Longitude float64
+	Latitude  float64
+	Zone      int
+	Easting   float64
+	Northing  float64
+}
+
+// ElevationProfileRequest represents the start and end points and parameters for an elevation profile request.
+type ElevationProfileRequest struct {
+	Type       string `json:"type"`
+	ID         string `json:"id"`
+	Attributes struct {
+		PointA                PointDefinition
+		PointB                PointDefinition
+		MaxTotalProfilePoints int
+		MinStepSize           float64 // in meters
+	}
+}
+
+// ProfilePoint represents a single point in the calculated elevation profile.
+type ProfilePoint struct {
+	Distance    float64
+	Elevation   float64
+	Longitude   float64
+	Latitude    float64
+	Easting     float64
+	Northing    float64
+	Attribution string
+}
+
+// ElevationProfileResponse represents the calculated elevation profile.
+type ElevationProfileResponse struct {
+	Type       string
+	ID         string
+	Attributes struct {
+		PointA                PointDefinition
+		PointB                PointDefinition
+		MaxTotalProfilePoints int
+		MinStepSize           float64
+		Profile               []ProfilePoint
+		Attributions          []string
+		IsError               bool
+		Error                 ErrorObject
 	}
 }
 

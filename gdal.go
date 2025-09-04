@@ -63,7 +63,6 @@ func transformLonLatToUTM(lon, lat float64, targetEPSG int) (float64, float64, e
 /*
 transformUTMToLonLat transforms UTM coordinates into Lon/Lat coordinates (WGS84, EPSG:4326).
 */
-/*
 func transformUTMToLonLat(easting, northing float64, zone int) (float64, float64, error) {
 	var longitude float64
 	var latitude float64
@@ -116,7 +115,6 @@ func transformUTMToLonLat(easting, northing float64, zone int) (float64, float64
 
 	return longitude, latitude, nil
 }
-*/
 
 /*
 getElevationFromUTM retrieves the elevation value from a GeoTIFF DGM file for a given UTM coordinate.
